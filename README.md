@@ -48,4 +48,4 @@ and commit the updated `public/` files.
 
 ## Tracking scripts on the page
 
-Inherited from challenge.yaru.ai: Google Tag Manager `GTM-MZNDR66H`, Meta Pixel `1026601493415631`, ActiveCampaign site tracking. Waitlist sign-ups fire `generate_lead` with `lead_source: "waitlist_th"` and Meta `CompleteRegistration` with `content_name: "TH 5-Day Challenge Waitlist"`, so they can be told apart from English course sign-ups. There is **no TikTok Pixel** yet.
+None for now. The English site's Google Tag Manager container (which fires the English TikTok pixel), Meta Pixel and ActiveCampaign tracking were removed so the Thai A/B test doesn't mix with English data. The Thai TikTok pixel will be added in `build_th.py` once it's created.

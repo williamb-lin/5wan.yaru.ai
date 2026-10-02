@@ -343,6 +343,15 @@ html = re.sub(r"<!-- Inline critical font styles.*?</style>", lambda m: (
     '    <link rel="preload" href="/fonts/SukhumvitSet-Text.ttf" as="font" type="font/ttf" crossorigin>\n'
     '    <link rel="preload" href="/fonts/SukhumvitSet-Thin.ttf" as="font" type="font/ttf" crossorigin>'),
     html, count=1, flags=re.S)
+# Tracking: the English site's GTM container (which fires the English TikTok pixel),
+# Meta Pixel and ActiveCampaign are all removed so the Thai A/B test starts clean.
+# The Thai TikTok pixel gets added here once it exists.
+for name in ["Google Tag Manager", "Google Tag Manager (TikTok)", "Meta Pixel Code",
+             "Meta Pixel noscript fallback", "Google Tag Manager (noscript)",
+             "Google Tag Manager (TikTok noscript)", "ActiveCampaign Site Tracking"]:
+    html, n = re.subn(r"\s*<!-- " + re.escape(name) + r" -->.*?<!-- End " + re.escape(name) + r" -->", "", html, flags=re.S)
+    if n != 1:
+        sys.exit(f"tracking block not found: {name}")
 html = sub_exact(html, "/assets/index-DQqFpzXo.js", "/assets/index-th.js", 1)
 html = sub_exact(html, "/assets/index-K9wBeB5c.css", "/assets/index-th.css", 1)
 (OUT / "index.html").write_text(html)
