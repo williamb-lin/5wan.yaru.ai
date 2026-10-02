@@ -1,0 +1,16 @@
+{
+  "name": "5wan-yaru-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Thai landing page + waitlist for the Yaru 5-Day Challenge (5wan.yaru.ai)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "python3 build_th.py"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}
