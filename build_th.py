@@ -278,11 +278,11 @@ js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsx("span",{className:"yt-pkg-name",children:l}),m.jsx("span",{className:"yt-pkg-desc yt-thin",children:d})]},k))})]}),'
     'm.jsx(mn,{type:"submit"', 1)
 
-# About section photo: Will Lin (white cap) at a session. Framed toward the right
-# of the photo so he stays in view in the tall About frame.
+# About section photo: Will Lin (white cap) working with an attendee. The frame is
+# 4:3 (not the original tall 480px box) so both faces fit in the landscape photo.
 js = sub_exact(js, 'Q1="/assets/new_graduate_image-D46KU05m.jpeg"', 'Q1="/assets/about-will-cap.jpg"', 1)
 js = sub_exact(js, 'className:"rounded-2xl w-full max-w-md h-[480px] object-cover object-top","data-testid":"img-history-collaboration"',
-               'className:"rounded-2xl w-full max-w-md h-[480px] object-cover",style:{objectPosition:"78% 30%"},"data-testid":"img-history-collaboration"', 1)
+               'className:"rounded-2xl w-full max-w-md object-cover",style:{aspectRatio:"4 / 3",objectPosition:"56% 40%"},"data-testid":"img-history-collaboration"', 1)
 
 # Hero: the promo video (English captions) is replaced by a photo of Will leading a
 # packed Yaru session. Framed slightly left of centre to keep him in view.
