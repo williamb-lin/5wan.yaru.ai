@@ -286,6 +286,7 @@ js = sub_exact(js, 'className:"rounded-2xl w-full max-w-md h-[480px] object-cove
 
 # Hero: the promo video (English captions) is replaced by a photo of Will leading a
 # packed Yaru session. Framed slightly left of centre to keep him in view.
+js = sub_exact(js, 'b1="/assets/yaru-create-promo-vid-ij--uKmM.mov"', 'b1=""', 1)  # video no longer shipped
 HERO_IMG = ("/assets/hero-will-leading-session.jpg", "40% 50%", "Will Lin นำเซสชันของ Yaru ในห้องที่เต็มไปด้วยผู้เข้าร่วม")
 js, n = re.subn(r'm\.jsx\("video",\{ref:n,.*?m\.jsx\(cx,\{className:"w-5 h-5"\}\)\}\)',
     lambda _m: 'm.jsx("img",{src:%s,alt:%s,className:"w-full h-full object-cover",style:{objectPosition:%s},"data-testid":"img-hero-main"})'
