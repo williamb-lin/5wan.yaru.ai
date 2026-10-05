@@ -28,8 +28,6 @@ T = {
         "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์",
     "Join the Free Challenge": "ลงชื่อรับราคา Early Bird",
     "See What's Inside": "ดูว่ามีอะไรบ้าง",
-    "Unmute video": "เปิดเสียงวิดีโอ",
-    "Mute video": "ปิดเสียงวิดีโอ",
     # Tools strip
     "Build with the world's leading AI tools": "สร้างด้วยเครื่องมือ AI ชั้นนำของโลก",
     # What you'll walk away with
@@ -103,7 +101,7 @@ T = {
         "ทุกวันมีเป้าหมายที่ชัดเจนหนึ่งอย่าง และผลลัพธ์ที่ชัดเจนหนึ่งอย่าง ไม่หนักเกินไป มีแต่แรงผลักดัน",
     # About
     "About Yaru": "เกี่ยวกับ Yaru",
-    "Joshua Maddox and the Yaru team": "Will Lin นำเวิร์กช็อปของ Yaru",
+    "Joshua Maddox and the Yaru team": "Will Lin ระหว่างเวิร์กช็อปของ Yaru",
     "We don't teach theory. We build in public.": "เราไม่สอนทฤษฎี เราลงมือสร้างเป็นเพื่อนคุณเลย",
     "Yaru builds real-world products and services using the latest AI tools, brings them to market, and documents exactly what's working and what isn't. Then we bring those lessons (the honest ones, not the hype) directly to you.":
         "Yaru สร้างผลิตภัณฑ์และบริการที่ใช้งานได้จริงด้วยเครื่องมือ AI ล่าสุด นำออกสู่ตลาด และบันทึกอย่างละเอียดว่าอะไรได้ผลและอะไรไม่ได้ผล จากนั้นเราก็นำบทเรียนเหล่านั้น (บทเรียนที่จริงใจ ไม่ใช่กระแส) มาถ่ายทอดให้คุณโดยตรง",
@@ -280,8 +278,20 @@ js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsx("span",{className:"yt-pkg-name",children:l}),m.jsx("span",{className:"yt-pkg-desc yt-thin",children:d})]},k))})]}),'
     'm.jsx(mn,{type:"submit"', 1)
 
-# About section photo: Will Lin leading a session
-js = sub_exact(js, 'Q1="/assets/new_graduate_image-D46KU05m.jpeg"', 'Q1="/assets/about-will-session.jpg"', 1)
+# About section photo: Will Lin (white cap) at a session. Framed toward the right
+# of the photo so he stays in view in the tall About frame.
+js = sub_exact(js, 'Q1="/assets/new_graduate_image-D46KU05m.jpeg"', 'Q1="/assets/about-will-cap.jpg"', 1)
+js = sub_exact(js, 'className:"rounded-2xl w-full max-w-md h-[480px] object-cover object-top","data-testid":"img-history-collaboration"',
+               'className:"rounded-2xl w-full max-w-md h-[480px] object-cover",style:{objectPosition:"78% 30%"},"data-testid":"img-history-collaboration"', 1)
+
+# Hero: the promo video (English captions) is replaced by a photo of Will leading a
+# packed Yaru session. Framed slightly left of centre to keep him in view.
+HERO_IMG = ("/assets/hero-will-leading-session.jpg", "40% 50%", "Will Lin นำเซสชันของ Yaru ในห้องที่เต็มไปด้วยผู้เข้าร่วม")
+js, n = re.subn(r'm\.jsx\("video",\{ref:n,.*?m\.jsx\(cx,\{className:"w-5 h-5"\}\)\}\)',
+    lambda _m: 'm.jsx("img",{src:%s,alt:%s,className:"w-full h-full object-cover",style:{objectPosition:%s},"data-testid":"img-hero-main"})'
+        % (json.dumps(HERO_IMG[0]), json.dumps(HERO_IMG[2], ensure_ascii=False), json.dumps(HERO_IMG[1])), js, count=1, flags=re.S)
+if n != 1:
+    sys.exit("hero video block not found")
 
 # AI tools strip: Google AI Studio -> Gemini (better known to Thai visitors)
 js = sub_exact(js, '["Lovable","Claude","ChatGPT","Replit","Google AI Studio"]', '["Claude","ChatGPT","Gemini","Lovable","Replit"]', 1)
