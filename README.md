@@ -1,32 +1,42 @@
-# 5wan.yaru.ai — Yaru 5-Day Challenge (Thai waitlist)
+# 5wan.yaru.ai — Yaru 5-Day Challenge (Thai)
 
-Thai version of [challenge.yaru.ai](https://challenge.yaru.ai). Same page, same design, translated to Thai and set in Sukhumvit Set. The sign-up form adds people to a **waitlist** (nothing is sent to Circle or any email tool); invite them later from the exported list.
+Thai version of [challenge.yaru.ai](https://challenge.yaru.ai), translated to Thai and set in Sukhumvit Set. Buyers pick a package (พื้นฐาน ฿3,990 · VIP ฿9,990 · 1:1 coaching ฿250,000/month), enter name and email, and pay on **Beam**'s hosted checkout. Orders are stored in Postgres and shown on `/admin`.
 
 ## What's in here
 
 | Path | What it is |
 |---|---|
 | `public/` | The live site: `index.html`, built JS/CSS, images, video, fonts |
-| `server.js` | Small Express server: serves `public/`, saves sign-ups, admin page |
+| `server.js` | Express server: serves `public/`, creates Beam payment links, receives Beam webhooks, admin page |
 | `source/` | Original English page + bundle from challenge.yaru.ai (never edited) |
-| `build_th.py` | Turns `source/` into `public/`: all Thai copy, fonts, waitlist form |
+| `build_th.py` | Turns `source/` into `public/`: all Thai copy, fonts, pricing, checkout form |
 
 ## Run on Replit
 
-1. **Import** this repo into the Repl (Git pane → connect `williamb-lin/5wan.yaru.ai`).
-2. **Database:** open the *Database* tool → create a PostgreSQL database. This sets `DATABASE_URL`. The `waitlist` table is created on first start.
-3. **Secrets:** add `ADMIN_PASSWORD` (any strong password, used to view the list).
-4. **Run** to test, then **Deploy → Autoscale**. Make sure the deployment has the database and `ADMIN_PASSWORD` too.
-5. **Custom domain:** in the deployment settings, add `5wan.yaru.ai` and create the DNS record Replit shows.
+1. **Database:** *Database* tool → PostgreSQL (sets `DATABASE_URL`). The `orders` table is created on first start.
+2. **App Secrets** (Tools → Secrets → App Secrets):
 
-Check it's live: `https://<your-domain>/healthz` should return `{"ok":true,"storage":"postgres"}`.
+   | Key | Where it comes from |
+   |---|---|
+   | `ADMIN_PASSWORD` | any strong password, for `/admin` |
+   | `BEAM_MERCHANT_ID` | Beam Lighthouse → Developers |
+   | `BEAM_API_KEY` | Beam Lighthouse → Developers → API Key |
+   | `BEAM_WEBHOOK_HMAC_KEY` | Beam Lighthouse → Developers → Webhooks → the webhook's HMAC key |
+   | `BEAM_ENV` | `playground` for test payments, `production` for real money |
+   | `PUBLIC_BASE_URL` | `https://5wan.yaru.ai` (where Beam sends buyers back) |
 
-## Seeing who signed up
+   Playground and production keys are different; use the pair that matches `BEAM_ENV`.
+3. **Beam webhook:** in Lighthouse → Developers → Webhooks, create one pointing to `https://5wan.yaru.ai/api/beam/webhook` with events `payment_link.paid` and `charge.succeeded`.
+4. **Restart** the app after changing secrets, then **Deploy → Autoscale** and link `5wan.yaru.ai`.
 
-- **`/admin`** — the list, newest first, with a count per ad source (log in with any username + `ADMIN_PASSWORD`).
-- **`/admin/waitlist.csv`** — download everything (opens in Excel/Sheets with Thai names intact).
+Check: `/healthz` returns `{"ok":true,"storage":"postgres","beam":"production","webhook":true}`.
 
-Each row stores: name, email, sign-up time, `utm_source / utm_medium / utm_campaign / utm_content / utm_term`, TikTok's `ttclid`, and the referrer. The same email is only stored once.
+## Orders
+
+- **`/admin`**: every order with status (paid / pending / expired / cancelled / error), buyer, phone, package, amount, payment method and ad source; paid totals per package. Opening it also re-checks recent pending orders with Beam, in case a webhook was missed.
+- **`/admin/orders.csv`**: everything as a spreadsheet.
+- Prices are set in `server.js` (`PACKAGES`, in satang); the page only sends which package. Change prices in both `server.js` and the cards in `build_th.py`.
+- The old `waitlist` table, if present, is left untouched.
 
 ## Tagging ad links
 

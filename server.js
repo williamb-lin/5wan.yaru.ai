@@ -1,10 +1,16 @@
-// 5wan.yaru.ai — Thai 5-Day Challenge waitlist.
-// Serves the static landing page from public/ and stores waitlist sign-ups.
+// 5wan.yaru.ai — Thai 5-Day Challenge landing page with Beam checkout.
+// Serves the static landing page from public/, turns a form submission into a Beam
+// payment link, records the order, and marks it paid when Beam confirms.
 //
 // Env (Replit Secrets):
-//   DATABASE_URL    Postgres connection string (Replit "Database" tool sets this)
-//   ADMIN_PASSWORD  password for /admin (the sign-up list) and /admin/waitlist.csv
-//   PORT            optional, defaults to 3000
+//   DATABASE_URL            Postgres connection string (Replit "Database" tool sets this)
+//   ADMIN_PASSWORD          password for /admin (the orders list) and /admin/orders.csv
+//   BEAM_MERCHANT_ID        Beam Lighthouse → Developers
+//   BEAM_API_KEY            Beam Lighthouse → Developers → API Key (secret, server only)
+//   BEAM_WEBHOOK_HMAC_KEY   Beam Lighthouse → Developers → Webhooks → your webhook's HMAC key
+//   BEAM_ENV                "playground" (test money, default) or "production" (real money)
+//   PUBLIC_BASE_URL         optional, e.g. https://5wan.yaru.ai — where Beam sends buyers back
+//   PORT                    optional, defaults to 3000
 "use strict";
 
 const crypto = require("crypto");
@@ -15,17 +21,37 @@ const express = require("express");
 const PORT = Number(process.env.PORT) || 3000;
 const IS_DEPLOYED = process.env.REPLIT_DEPLOYMENT === "1";
 const PUBLIC_DIR = path.join(__dirname, "public");
-const LOCAL_FILE = path.join(__dirname, "data", "waitlist.local.json");
+const LOCAL_FILE = path.join(__dirname, "data", "orders.local.json");
+
+// Prices live here, never in the browser: the form only says which package.
+// Amounts are in satang (Beam uses the smallest currency unit): 399000 = ฿3,990.
+const PACKAGES = {
+  basic: { label: "Basic", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000 },
+  vip: { label: "VIP", item: "ชาเลนจ์ 5 วัน: แพ็กเกจ VIP", amount: 999000 },
+  coaching: { label: "1:1 Coaching", item: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)", amount: 25000000 },
+};
+const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
+
+const BEAM = {
+  env: process.env.BEAM_ENV === "production" ? "production" : "playground",
+  merchantId: process.env.BEAM_MERCHANT_ID || "",
+  apiKey: process.env.BEAM_API_KEY || "",
+  hmacKey: process.env.BEAM_WEBHOOK_HMAC_KEY || "",
+};
+BEAM.api =
+  process.env.BEAM_API_BASE || // local testing against a mock only
+  (BEAM.env === "production" ? "https://api.beamcheckout.com" : "https://playground.api.beamcheckout.com");
+BEAM.ready = Boolean(BEAM.merchantId && BEAM.apiKey);
+
+// Beam payment-link statuses -> our order status.
+const LINK_STATUS = { ACTIVE: "pending", PAID: "paid", EXPIRED: "expired", DISABLED: "cancelled", VOIDED: "refunded", REFUNDED: "refunded" };
 
 // ---------------------------------------------------------------------------
 // Storage: Postgres when DATABASE_URL is set; a local JSON file otherwise
 // (local testing only — deployed instances refuse to run without Postgres,
 // because Replit deployments don't keep files written at runtime).
+// The old `waitlist` table, if present, is left untouched.
 // ---------------------------------------------------------------------------
-// Course packages offered on the page (value sent by the form -> label).
-const PACKAGES = { basic: "Basic", vip: "VIP", coaching: "1:1 Coaching", online: "Online (old pricing)" };
-const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
-
 function createStore() {
   if (process.env.DATABASE_URL) {
     const { Pool } = require("pg");
@@ -34,33 +60,50 @@ function createStore() {
       kind: "postgres",
       async init() {
         await pool.query(`
-          CREATE TABLE IF NOT EXISTS waitlist (
-            id           SERIAL PRIMARY KEY,
-            name         TEXT NOT NULL,
-            email        TEXT NOT NULL,
-            utm_source   TEXT, utm_medium TEXT, utm_campaign TEXT,
-            utm_content  TEXT, utm_term   TEXT, ttclid       TEXT,
-            params       JSONB,
-            referrer     TEXT,
-            created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+          CREATE TABLE IF NOT EXISTS orders (
+            id              SERIAL PRIMARY KEY,
+            ref             TEXT NOT NULL UNIQUE,
+            name            TEXT NOT NULL,
+            email           TEXT NOT NULL,
+            package         TEXT NOT NULL,
+            amount          INTEGER NOT NULL,
+            currency        TEXT NOT NULL DEFAULT 'THB',
+            status          TEXT NOT NULL DEFAULT 'pending',
+            beam_env        TEXT,
+            payment_link_id TEXT,
+            phone           TEXT,
+            payment_method  TEXT,
+            utm_source      TEXT, utm_medium TEXT, utm_campaign TEXT,
+            utm_content     TEXT, utm_term   TEXT, ttclid       TEXT,
+            params          JSONB,
+            referrer        TEXT,
+            created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+            paid_at         TIMESTAMPTZ
           );
-          CREATE UNIQUE INDEX IF NOT EXISTS waitlist_email_key ON waitlist (lower(email));
-          ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS package TEXT;
+          CREATE INDEX IF NOT EXISTS orders_payment_link_id ON orders (payment_link_id);
         `);
       },
-      // Returns true when the email was new, false when already on the list.
-      async add(row) {
-        const r = await pool.query(
-          `INSERT INTO waitlist (name, email, package, utm_source, utm_medium, utm_campaign,
-                                 utm_content, utm_term, ttclid, params, referrer)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-           ON CONFLICT (lower(email)) DO NOTHING`,
-          [row.name, row.email, row.package, ...AD_FIELDS.map((f) => row[f]), row.params, row.referrer]
+      async create(o) {
+        await pool.query(
+          `INSERT INTO orders (ref, name, email, package, amount, beam_env, utm_source, utm_medium,
+                               utm_campaign, utm_content, utm_term, ttclid, params, referrer)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+          [o.ref, o.name, o.email, o.package, o.amount, o.beam_env, ...AD_FIELDS.map((f) => o[f]), o.params, o.referrer]
         );
-        return r.rowCount === 1;
+      },
+      async update(ref, fields) {
+        const keys = Object.keys(fields);
+        await pool.query(
+          `UPDATE orders SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")} WHERE ref = $1`,
+          [ref, ...keys.map((k) => fields[k])]
+        );
+      },
+      async byLink(linkId) {
+        const r = await pool.query("SELECT * FROM orders WHERE payment_link_id = $1", [linkId]);
+        return r.rows[0] || null;
       },
       async list() {
-        const r = await pool.query("SELECT * FROM waitlist ORDER BY created_at DESC");
+        const r = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
         return r.rows;
       },
     };
@@ -69,19 +112,24 @@ function createStore() {
   if (IS_DEPLOYED) {
     throw new Error("DATABASE_URL is not set. Create a PostgreSQL database in Replit before deploying.");
   }
-  console.warn("[waitlist] DATABASE_URL not set — saving to", LOCAL_FILE, "(local testing only)");
+  console.warn("[orders] DATABASE_URL not set — saving to", LOCAL_FILE, "(local testing only)");
   const read = () => (fs.existsSync(LOCAL_FILE) ? JSON.parse(fs.readFileSync(LOCAL_FILE, "utf8")) : []);
+  const write = (rows) => fs.writeFileSync(LOCAL_FILE, JSON.stringify(rows, null, 2));
   return {
     kind: "local-file",
     async init() {
       fs.mkdirSync(path.dirname(LOCAL_FILE), { recursive: true });
     },
-    async add(row) {
+    async create(o) {
       const rows = read();
-      if (rows.some((r) => r.email.toLowerCase() === row.email.toLowerCase())) return false;
-      rows.push({ id: rows.length + 1, ...row, created_at: new Date().toISOString() });
-      fs.writeFileSync(LOCAL_FILE, JSON.stringify(rows, null, 2));
-      return true;
+      rows.push({ id: rows.length + 1, ...o, currency: "THB", status: "pending", created_at: new Date().toISOString(), paid_at: null });
+      write(rows);
+    },
+    async update(ref, fields) {
+      write(read().map((r) => (r.ref === ref ? { ...r, ...fields } : r)));
+    },
+    async byLink(linkId) {
+      return read().find((r) => r.payment_link_id === linkId) || null;
     },
     async list() {
       return read().reverse();
@@ -90,12 +138,57 @@ function createStore() {
 }
 
 // ---------------------------------------------------------------------------
+// Beam API
+// ---------------------------------------------------------------------------
+async function beamRequest(method, urlPath, body, idempotencyKey) {
+  const headers = {
+    Authorization: "Basic " + Buffer.from(`${BEAM.merchantId}:${BEAM.apiKey}`).toString("base64"),
+    "Content-Type": "application/json",
+  };
+  if (idempotencyKey) headers["x-beam-idempotency-key"] = idempotencyKey;
+  const res = await fetch(BEAM.api + urlPath, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(`Beam ${method} ${urlPath} -> ${res.status} ${data?.error?.errorCode || ""}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+// Beam signs the raw request body with HMAC-SHA256 (base64 key, base64 signature).
+function validBeamSignature(rawBody, signature) {
+  if (!BEAM.hmacKey || !signature) return false;
+  const expected = crypto.createHmac("sha256", Buffer.from(BEAM.hmacKey, "base64")).update(rawBody).digest();
+  const given = Buffer.from(signature, "base64");
+  return given.length === expected.length && crypto.timingSafeEqual(given, expected);
+}
+
+// Ask Beam for a pending order's link status (backup for missed webhooks).
+async function refreshFromBeam(store, order) {
+  if (!BEAM.ready || order.status !== "pending" || !order.payment_link_id || order.beam_env !== BEAM.env) return;
+  const link = await beamRequest("GET", `/api/v1/payment-links/${encodeURIComponent(order.payment_link_id)}`);
+  const status = LINK_STATUS[link.status];
+  if (status && status !== order.status) {
+    const fields = { status, ...(status === "paid" && !order.paid_at ? { paid_at: new Date().toISOString() } : {}) };
+    await store.update(order.ref, fields);
+    Object.assign(order, fields);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const clip = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+const baht = (satang) => "฿" + (Number(satang || 0) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
 
-// Naive per-IP limit so a bot can't flood the list: 10 sign-ups / 10 min.
+// Naive per-IP limit so a bot can't flood checkouts: 10 per 10 min.
 const hits = new Map();
 function rateLimited(ip) {
   const now = Date.now();
@@ -114,7 +207,7 @@ function checkAdmin(req, res, next) {
   const a = crypto.createHash("sha256").update(given).digest();
   const b = crypto.createHash("sha256").update(expected).digest();
   if (crypto.timingSafeEqual(a, b)) return next();
-  res.set("WWW-Authenticate", 'Basic realm="5wan waitlist", charset="UTF-8"').status(401).send("Login required");
+  res.set("WWW-Authenticate", 'Basic realm="5wan admin", charset="UTF-8"').status(401).send("Login required");
 }
 
 const esc = (v) =>
@@ -128,7 +221,9 @@ const csvCell = (v) => {
 };
 
 const fmtDate = (d) =>
-  new Date(d).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" });
+  d ? new Date(d).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" }) : "";
+
+const STATUS_COLOR = { paid: "#1f7a3a", pending: "#9a6b00", expired: "#7a6f63", cancelled: "#7a6f63", refunded: "#7a6f63", error: "#c62a35" };
 
 // ---------------------------------------------------------------------------
 // App
@@ -140,69 +235,146 @@ async function main() {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", true);
+
+  // Beam webhook: needs the raw body for the signature, so it's registered before express.json().
+  app.post("/api/beam/webhook", express.raw({ type: "*/*", limit: "1mb" }), async (req, res) => {
+    if (!BEAM.hmacKey) return res.status(503).send("Webhook key not configured");
+    if (!validBeamSignature(req.body, req.get("x-beam-signature"))) return res.status(401).send("Bad signature");
+    let event;
+    try {
+      event = JSON.parse(req.body.toString("utf8"));
+    } catch {
+      return res.status(400).send("Bad JSON");
+    }
+    const type = req.get("x-beam-event") || "";
+    try {
+      if (type === "payment_link.paid" && event.paymentLinkId) {
+        const order = await store.byLink(event.paymentLinkId);
+        if (order && order.status !== "paid") {
+          await store.update(order.ref, { status: "paid", paid_at: new Date().toISOString() });
+          console.log(`[beam] order ${order.ref} paid (${order.package})`);
+        }
+      } else if (type === "charge.succeeded" && event.source === "PAYMENT_LINK" && event.sourceId) {
+        // Carries the buyer's phone and payment method; also marks paid if it arrives first.
+        const order = await store.byLink(event.sourceId);
+        if (order) {
+          const p = event.customer?.primaryPhone;
+          const fields = {
+            // Thai numbers arrive as 0XXXXXXXXX: keep that familiar local format.
+            phone: p?.number ? (p.number.startsWith("0") ? p.number : `${p.countryCode || ""}${p.number}`) : order.phone || null,
+            payment_method: event.paymentMethod?.paymentMethodType || order.payment_method || null,
+          };
+          if (order.status !== "paid") Object.assign(fields, { status: "paid", paid_at: event.transactionTime || new Date().toISOString() });
+          await store.update(order.ref, fields);
+        }
+      }
+      res.status(200).send("ok");
+    } catch (err) {
+      console.error(`[beam] webhook ${type} failed:`, err.message);
+      res.status(500).send("error"); // Beam retries
+    }
+  });
+
   app.use(express.json({ limit: "10kb" }));
 
-  app.post("/api/waitlist", async (req, res) => {
+  app.post("/api/checkout", async (req, res) => {
     if (rateLimited(req.ip)) return res.status(429).json({ message: "Too many requests" });
+    if (!BEAM.ready) return res.status(503).json({ message: "Payments are not set up yet" });
     const name = clip(req.body?.name, 100);
     const email = clip(req.body?.email, 254).toLowerCase();
-    if (!name || !EMAIL_RE.test(email)) return res.status(400).json({ message: "Invalid name or email" });
+    const pkgKey = clip(req.body?.package, 20);
+    const pkg = PACKAGES[pkgKey];
+    if (!name || !EMAIL_RE.test(email) || !pkg) return res.status(400).json({ message: "Invalid name, email or package" });
 
     const params = {};
     for (const [k, v] of Object.entries(req.body?.params || {}).slice(0, 30)) params[clip(k, 50)] = clip(v, 300);
-    const pkg = clip(req.body?.package, 20);
-    const row = { name, email, package: PACKAGES[pkg] ? pkg : null, params, referrer: clip(req.body?.referrer, 500) };
-    for (const f of AD_FIELDS) row[f] = params[f] || null;
+    const ref = "5W-" + crypto.randomBytes(5).toString("hex").toUpperCase();
+    const order = { ref, name, email, package: pkgKey, amount: pkg.amount, beam_env: BEAM.env, params, referrer: clip(req.body?.referrer, 500) };
+    for (const f of AD_FIELDS) order[f] = params[f] || null;
 
+    const base = (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/+$/, "");
     try {
-      const isNew = await store.add(row);
-      console.log(`[waitlist] ${isNew ? "new" : "duplicate"} sign-up (package: ${row.package || "none"}, source: ${row.utm_source || "direct"})`);
-      res.json({ ok: true });
+      await store.create(order);
+      const link = await beamRequest(
+        "POST",
+        "/api/v1/payment-links",
+        {
+          order: {
+            currency: "THB",
+            netAmount: pkg.amount,
+            description: `Yaru 5-Day Challenge – ${pkg.label}`,
+            referenceId: ref,
+            orderItems: [{ itemName: pkg.item, price: pkg.amount, quantity: 1, productId: pkgKey }],
+          },
+          collectPhoneNumber: true,
+          redirectUrl: `${base}/?payment=success&order=${ref}`,
+          cancelUrl: `${base}/?payment=cancelled#signup`,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        },
+        ref
+      );
+      await store.update(ref, { payment_link_id: link.id });
+      console.log(`[checkout] order ${ref} created (${pkgKey}, ${BEAM.env}, source: ${order.utm_source || "direct"})`);
+      res.json({ url: link.url });
     } catch (err) {
-      console.error("[waitlist] save failed:", err);
-      res.status(500).json({ message: "Could not save sign-up" });
+      console.error(`[checkout] order ${ref} failed:`, err.message);
+      await store.update(ref, { status: "error" }).catch(() => {});
+      res.status(502).json({ message: "Could not start payment" });
     }
   });
 
   app.get("/admin", checkAdmin, async (_req, res) => {
     const rows = await store.list();
-    const bySource = {};
+    // Catch up on payments whose webhook hasn't arrived (recent pending orders only).
+    const recentPending = rows.filter((r) => r.status === "pending" && Date.now() - new Date(r.created_at) < 3 * 864e5).slice(0, 25);
+    for (const r of recentPending) await refreshFromBeam(store, r).catch((e) => console.warn("[admin] refresh", r.ref, e.message));
+
+    const paid = rows.filter((r) => r.status === "paid");
     const byPackage = {};
-    for (const r of rows) {
-      bySource[r.utm_source || "direct"] = (bySource[r.utm_source || "direct"] || 0) + 1;
-      const label = PACKAGES[r.package] || "not chosen";
-      byPackage[label] = (byPackage[label] || 0) + 1;
+    for (const r of paid) {
+      const k = PACKAGES[r.package]?.label || r.package;
+      byPackage[k] = byPackage[k] || { n: 0, sum: 0 };
+      byPackage[k].n += 1;
+      byPackage[k].sum += Number(r.amount);
     }
+    const revenue = paid.reduce((s, r) => s + Number(r.amount), 0);
+    const mode = BEAM.ready ? (BEAM.env === "production" ? "LIVE payments" : "TEST payments (Beam playground)") : "Beam not connected";
     res.set("Cache-Control", "no-store").send(`<!doctype html><html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-<title>5wan waitlist (${rows.length})</title>
+<title>5wan orders (${paid.length} paid)</title>
 <style>body{font-family:system-ui,sans-serif;margin:24px;color:#1f1a14;background:#f7f3ee}
 h1{margin:0 0 4px}.muted{color:#7a6f63}table{border-collapse:collapse;width:100%;background:#fff;margin-top:16px}
-th,td{padding:8px 10px;border-bottom:1px solid #e6dfd6;text-align:left;font-size:14px;vertical-align:top}
+th,td{padding:8px 10px;border-bottom:1px solid #e6dfd6;text-align:left;font-size:14px;vertical-align:top;white-space:nowrap}
 th{background:#c62a35;color:#fff;position:sticky;top:0}a.btn{display:inline-block;margin-top:12px;padding:8px 14px;
-background:#c62a35;color:#fff;border-radius:8px;text-decoration:none}.wrap{overflow-x:auto}</style></head><body>
-<h1>Waitlist: ${rows.length} sign-up${rows.length === 1 ? "" : "s"}</h1>
-<div class="muted">By package: ${Object.entries(byPackage).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") || "none yet"}</div>
-<div class="muted">By source: ${Object.entries(bySource).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") || "none yet"} · storage: ${store.kind}</div>
-<a class="btn" href="/admin/waitlist.csv">Download CSV</a>
-<div class="wrap"><table><thead><tr><th>#</th><th>Signed up (Bangkok)</th><th>Name</th><th>Email</th><th>Package</th><th>utm_source</th><th>utm_campaign</th><th>utm_content</th></tr></thead><tbody>
-${rows.map((r, i) => `<tr><td>${rows.length - i}</td><td>${esc(fmtDate(r.created_at))}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(PACKAGES[r.package] || "")}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td><td>${esc(r.utm_content)}</td></tr>`).join("\n")}
+background:#c62a35;color:#fff;border-radius:8px;text-decoration:none}.wrap{overflow-x:auto}
+.mode{display:inline-block;padding:2px 10px;border-radius:999px;background:${BEAM.env === "production" && BEAM.ready ? "#1f7a3a" : "#9a6b00"};color:#fff;font-size:12px}</style></head><body>
+<h1>Orders: ${paid.length} paid · ${esc(baht(revenue))}</h1>
+<div class="muted"><span class="mode">${esc(mode)}</span> · storage: ${store.kind}</div>
+<div class="muted">Paid by package: ${Object.entries(byPackage).map(([k, v]) => `${esc(k)} ${v.n} (${esc(baht(v.sum))})`).join(" · ") || "none yet"}</div>
+<div class="muted">Not paid: ${rows.length - paid.length} (pending, expired, cancelled or failed)</div>
+<a class="btn" href="/admin/orders.csv">Download CSV</a>
+<div class="wrap"><table><thead><tr><th>Created (Bangkok)</th><th>Status</th><th>Order</th><th>Name</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Paid (Bangkok)</th><th>Method</th><th>utm_source</th><th>utm_campaign</th></tr></thead><tbody>
+${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${STATUS_COLOR[r.status] || "#1f1a14"};font-weight:600">${esc(r.status)}</td><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(PACKAGES[r.package]?.label || r.package)}</td><td>${esc(baht(r.amount))}</td><td>${esc(fmtDate(r.paid_at))}</td><td>${esc(r.payment_method)}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td></tr>`).join("\n")}
 </tbody></table></div></body></html>`);
   });
 
-  app.get("/admin/waitlist.csv", checkAdmin, async (_req, res) => {
+  app.get("/admin/orders.csv", checkAdmin, async (_req, res) => {
     const rows = await store.list();
-    const cols = ["created_at", "name", "email", "package", ...AD_FIELDS, "referrer", "params"];
-    const lines = [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(c === "created_at" ? new Date(r[c]).toISOString() : r[c])).join(","))];
+    const cols = ["created_at", "status", "ref", "name", "email", "phone", "package", "amount_thb", "paid_at", "payment_method", "beam_env", "payment_link_id", ...AD_FIELDS, "referrer"];
+    const value = (r, c) =>
+      c === "amount_thb" ? Number(r.amount) / 100 : c === "created_at" || c === "paid_at" ? (r[c] ? new Date(r[c]).toISOString() : "") : r[c];
+    const lines = [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(value(r, c))).join(","))];
     res.set({
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="5wan-waitlist-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="5wan-orders-${new Date().toISOString().slice(0, 10)}.csv"`,
       "Cache-Control": "no-store",
     });
     res.send("﻿" + lines.join("\r\n")); // BOM so Excel shows Thai names correctly
   });
 
-  app.get("/healthz", (_req, res) => res.json({ ok: true, storage: store.kind }));
+  app.get("/healthz", (_req, res) =>
+    res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "not-configured", webhook: Boolean(BEAM.hmacKey) })
+  );
 
   app.use(express.static(PUBLIC_DIR, {
     setHeaders(res, file) {
@@ -212,7 +384,9 @@ ${rows.map((r, i) => `<tr><td>${rows.length - i}</td><td>${esc(fmtDate(r.created
   // Single-page app: unknown paths get the landing page.
   app.get("*", (_req, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
 
-  app.listen(PORT, "0.0.0.0", () => console.log(`[5wan] listening on :${PORT} (storage: ${store.kind})`));
+  app.listen(PORT, "0.0.0.0", () =>
+    console.log(`[5wan] listening on :${PORT} (storage: ${store.kind}, beam: ${BEAM.ready ? BEAM.env : "not configured"})`)
+  );
 }
 
 main().catch((err) => {

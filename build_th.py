@@ -20,13 +20,13 @@ css = (SRC / "index-K9wBeB5c.css").read_text()
 T = {
     # Loading / nav
     "Loading Yaru Create...": "กำลังโหลด Yaru Create...",
-    "Join Free": "ลงชื่อรอรับสิทธิ์",
+    "Join Free": "สมัครเลย",
     # Hero
     "FREE 5-Day Challenge": "ชาเลนจ์ 5 วัน · ราคาพิเศษช่วงเปิดตัว",
     "Launch a product idea in 5 days with AI.": "นำไอเดียของคุณออกมาหารายได้ภายใน 5 วัน ด้วย AI",
     "No code. No experience. No excuses. Pick your idea, start building, and get it in front of real people. In a week, for free.":
         "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์",
-    "Join the Free Challenge": "ลงชื่อรับราคาพิเศษ",
+    "Join the Free Challenge": "สมัครรับราคาพิเศษ",
     "See What's Inside": "ดูว่ามีอะไรบ้าง",
     # Tools strip
     "Build with the world's leading AI tools": "สร้างด้วยเครื่องมือ AI ชั้นนำของโลก",
@@ -115,36 +115,34 @@ T = {
         "ขอแค่ว่าคุณเป็นคนที่พยายามอย่างสม่ำเสมอ นี่แหละคือคนที่จะสามารถก้าวต่อไปได้เรื่อยๆ กับ AI",
     "In five days you'll do more than most people do in months of thinking about it. AI is changing everything. Don't deal with it by watching from the sidelines.":
         "ในห้าวัน คุณจะทำได้มากกว่าที่คนส่วนใหญ่ทำในหลายเดือนที่เอาแต่คิด AI กำลังเปลี่ยนทุกอย่าง อย่ารับมือกับมันด้วยการยืนดูอยู่ข้างสนาม",
-    "Join the Free 5-Day Challenge": "ลงชื่อรอเข้าร่วมชาเลนจ์ 5 วัน",
+    "Join the Free 5-Day Challenge": "สมัครชาเลนจ์ 5 วัน",
     "No credit card. No experience required. Just show up for five days.":
-        "ลงชื่อตอนนี้ยังไม่ต้องชำระเงิน ไม่ต้องมีประสบการณ์ แค่มาให้ครบห้าวัน",
+        "ไม่ต้องมีประสบการณ์ แค่มาให้ครบห้าวัน",
     # Signup
-    "100% free. No credit card required.": "ลงชื่อตอนนี้ ยังไม่ต้องชำระเงิน",
+    "100% free. No credit card required.": "ชำระเงินอย่างปลอดภัยผ่าน Beam",
     "5 short daily emails with video walkthroughs": "อีเมลสั้นๆ วันละฉบับ 5 วัน พร้อมวิดีโอแนะนำทีละขั้นตอน",
     "Access to 100+ vetted AI business ideas": "เข้าถึงไอเดียธุรกิจ AI ที่คัดสรรแล้วกว่า 100 ไอเดีย",
     "AI tools to generate your idea and validate it fast": "เครื่องมือ AI ที่ช่วยสร้างไอเดียและพิสูจน์ไอเดียได้อย่างรวดเร็ว",
     "A private community of builders doing it alongside you": "คอมมูนิตี้ส่วนตัวของเหล่านักสร้างที่ลงมือทำไปพร้อมกับคุณ",
-    "Join Free Today": "ลงชื่อรับราคาพิเศษ",
+    "Join Free Today": "สมัครรับราคาพิเศษ",
     "Ready to stop thinking and start building?": "พร้อมจะเลิกหาข้อมูล แล้วมาเริ่มลงมือสร้างไปด้วยกันหรือยัง?",
     "Enter your name and email. Day 1 of the challenge hits your inbox immediately. Five days from now you'll have a launched idea in front of real people.":
-        "กรอกชื่อ อีเมล และเลือกแพ็กเกจที่สนใจ เราจะส่งรายละเอียดและลิงก์ชำระเงินให้คุณทางอีเมลก่อนเปิดรับ ตอนนี้แพ็กเกจพื้นฐานและ VIP อยู่ในราคาพิเศษช่วงเปิดตัว",
-    "You're in the challenge!": "คุณอยู่ในรายชื่อแล้ว!",
+        "เลือกแพ็กเกจ กรอกชื่อและอีเมล แล้วชำระเงินได้ทันทีผ่าน Beam ตอนนี้แพ็กเกจพื้นฐานและ VIP อยู่ในราคาพิเศษช่วงเปิดตัว",
+    "You're in the challenge!": "ชำระเงินเรียบร้อย ยินดีต้อนรับ!",
     "Check your inbox. Day 1 is already on its way. Your journey from idea to launch starts now.":
-        "ขอบคุณที่ลงชื่อ เราจะส่งรายละเอียดและลิงก์ชำระเงินสำหรับแพ็กเกจที่คุณเลือกให้ทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณใกล้จะเริ่มแล้ว",
+        "ขอบคุณที่สมัครชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว",
     "Don't see it? Check your spam folder and mark us as safe.":
         "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย",
-    "Day 1 goes to your inbox immediately.": "เราจะส่งรายละเอียดและลิงก์ชำระเงินให้คุณทางอีเมล",
+    "Day 1 goes to your inbox immediately.": "กรอกข้อมูล แล้วไปชำระเงินที่หน้าชำระเงินของ Beam",
     "First Name": "ชื่อจริง",
     "Your first name": "ชื่อจริงของคุณ",
     "Email Address": "อีเมล",
     "Your email address": "อีเมลของคุณ",
-    "Signing you up...": "กำลังบันทึก...",
-    "Start the Free Challenge": "ลงชื่อรอรับสิทธิ์",
-    "No spam. No credit card. Unsubscribe any time.": "ไม่มีสแปม ยังไม่ต้องชำระเงินตอนนี้ ยกเลิกรับอีเมลได้ทุกเมื่อ",
-    "You're in!": "ลงชื่อเรียบร้อยแล้ว!",
-    "Check your email. Day 1 is on its way.": "เราจะส่งรายละเอียดและลิงก์ชำระเงินให้คุณทางอีเมล",
+    "Signing you up...": "กำลังไปหน้าชำระเงิน...",
+    "Start the Free Challenge": "ไปหน้าชำระเงิน",
+    "No spam. No credit card. Unsubscribe any time.": "ชำระเงินอย่างปลอดภัยผ่าน Beam · ไม่มีสแปม",
     "Something went wrong": "เกิดข้อผิดพลาด",
-    "There was an issue signing you up. Please try again.": "เกิดปัญหาในการบันทึก กรุณาลองใหม่อีกครั้ง",
+    "There was an issue signing you up. Please try again.": "ไม่สามารถไปหน้าชำระเงินได้ กรุณาลองใหม่อีกครั้ง",
     # 404
     "404 Page Not Found": "404 ไม่พบหน้านี้",
     "Did you forget to add the page to the router?": "ไม่พบหน้าที่คุณกำลังค้นหา",
@@ -238,17 +236,17 @@ js = sub_exact(js, ',m.jsx("p",{className:"text-sm opacity-70",children:"100% fr
 js = sub_exact(js, 'type:"red",background:"bg-primary"}', 'type:"image",backgroundImage:"/assets/day1-idea.jpg"}', 1)
 js = sub_exact(js, 'type:"dark",background:"bg-foreground"}', 'type:"image",backgroundImage:"/assets/day3-validate.jpg"}', 1)
 
-# Sign-up form -> waitlist. One POST to our own /api/waitlist (no Circle community add),
+# Sign-up form -> checkout. One POST to our own /api/checkout (no Circle community add),
 # carrying UTM params + referrer so TikTok/other ad traffic can be told apart.
 js = sub_exact(js,
     'fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t.name,email:t.email,interest:"challenge",motivation:"5-day challenge signup",linkedin:"",twitter:"",tiktok:"",fellowship:"not-sure"})}),fetch("/api/circle/add-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({firstName:c,email:t.email})}).catch(p=>console.warn("Circle add-contact error (non-blocking):",p))',
-    'fetch("/api/waitlist",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t.name,email:t.email,params:Object.fromEntries(new URLSearchParams(location.search)),referrer:document.referrer})})',
+    'fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t.name,email:t.email,params:Object.fromEntries(new URLSearchParams(location.search)),referrer:document.referrer})})',
     1)
 # Keep Thai waitlist conversions separate from English course sign-ups in GTM / Meta
 js = sub_exact(js, 'event:"generate_lead",currency:"USD",value:997,lead_source:"subscribe_widget"',
-               'event:"generate_lead",lead_source:"waitlist_th"', 1)
+               'event:"begin_checkout",lead_source:"checkout_th"', 1)
 js = sub_exact(js, 'content_name:"Course Sign Up",status:"registered"',
-               'content_name:"TH 5-Day Challenge Waitlist",status:"waitlisted"', 1)
+               'content_name:"TH 5-Day Challenge Checkout",status:"checkout_started"', 1)
 
 # Paid course: three packages. Shown as cards in the sign-up section and chosen on
 # the form (saved with the sign-up as "basic" / "vip" / "coaching").
@@ -269,6 +267,16 @@ js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("ul",{className:"space-y-3",children:X1.map(', 1)
 js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"basic"})', 1)
 js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"basic"})', 1)
+# On success the server returns Beam's payment-link URL: send the buyer there (no toast,
+# no "you're in" card). Beam sends them back to /?payment=success, which shows the
+# thank-you card and scrolls to it.
+js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
+js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 is on its way."}),n({name:"",email:"",pkg:"basic"})',
+               'window.location.assign(_ck.url)', 1)
+js = sub_exact(js, '[i,s]=v.useState(!1),l=async u=>',
+               '[i,s]=v.useState(()=>new URLSearchParams(location.search).get("payment")==="success"),l=async u=>', 1)
+js = sub_exact(js, ',[u]:c}))};return m.jsx("section",{id:"signup"',
+               ',[u]:c}))};v.useEffect(()=>{if(i){setTimeout(()=>{const el=document.querySelector("#signup h3")||document.getElementById("signup");el&&el.scrollIntoView({block:"center"})},400)}},[]);return m.jsx("section",{id:"signup"', 1)
 js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'body:JSON.stringify({name:t.name,email:t.email,package:t.pkg,params', 1)
 js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกแพ็กเกจที่สนใจ") + '}),'
@@ -318,7 +326,7 @@ THIN = [
     'className:"text-xs text-muted-foreground mb-6 font-semibold tracking-widest uppercase"',  # tools label
     'className:"text-white/40 text-sm mt-2"',                                     # quote attribution
     'className:"text-muted-foreground text-sm",children:"CEO',                    # CEO title
-    'className:"text-sm text-muted-foreground",children:"ลงชื่อตอนนี้',          # final CTA footnote
+    'className:"text-sm text-muted-foreground",children:"ไม่ต้องมีประสบการณ์',          # final CTA footnote
     'className:"text-sm text-muted-foreground",children:"ถ้าไม่เห็น',            # success footnote
     'className:"text-muted-foreground text-center text-sm mb-8"',                 # form subtitle
     'className:"text-xs text-muted-foreground text-center"',                      # form footnote
@@ -383,7 +391,7 @@ css = FONT_CSS + css + TH_CSS
 # ---------------------------------------------------------------------------
 html = (SRC / "index.en.html").read_text()
 TITLE = "Yaru Create - ชาเลนจ์ 5 วัน: นำไอเดียของคุณออกมาหารายได้ด้วย AI"
-DESC = "ลงชื่อรอเข้าร่วมชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
+DESC = "สมัครชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
 OG_DESC = "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์ ราคาพิเศษเริ่มต้น ฿3,990"
 html = sub_exact(html, '<html lang="en">', '<html lang="th">', 1)
 html = sub_exact(html, "Yaru Create - Free 5-Day Challenge: Launch a Product Idea with AI", TITLE)
