@@ -23,7 +23,7 @@ const LOCAL_FILE = path.join(__dirname, "data", "waitlist.local.json");
 // because Replit deployments don't keep files written at runtime).
 // ---------------------------------------------------------------------------
 // Course packages offered on the page (value sent by the form -> label).
-const PACKAGES = { online: "Online", vip: "VIP In-Person" };
+const PACKAGES = { basic: "Basic", vip: "VIP", coaching: "1:1 Coaching", online: "Online (old pricing)" };
 const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
 
 function createStore() {

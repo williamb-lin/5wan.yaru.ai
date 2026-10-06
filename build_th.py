@@ -22,11 +22,11 @@ T = {
     "Loading Yaru Create...": "กำลังโหลด Yaru Create...",
     "Join Free": "ลงชื่อรอรับสิทธิ์",
     # Hero
-    "FREE 5-Day Challenge": "ชาเลนจ์ 5 วัน · ราคา Early Bird",
+    "FREE 5-Day Challenge": "ชาเลนจ์ 5 วัน · ราคาพิเศษช่วงเปิดตัว",
     "Launch a product idea in 5 days with AI.": "นำไอเดียของคุณออกมาหารายได้ภายใน 5 วัน ด้วย AI",
     "No code. No experience. No excuses. Pick your idea, start building, and get it in front of real people. In a week, for free.":
         "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์",
-    "Join the Free Challenge": "ลงชื่อรับราคา Early Bird",
+    "Join the Free Challenge": "ลงชื่อรับราคาพิเศษ",
     "See What's Inside": "ดูว่ามีอะไรบ้าง",
     # Tools strip
     "Build with the world's leading AI tools": "สร้างด้วยเครื่องมือ AI ชั้นนำของโลก",
@@ -124,13 +124,13 @@ T = {
     "Access to 100+ vetted AI business ideas": "เข้าถึงไอเดียธุรกิจ AI ที่คัดสรรแล้วกว่า 100 ไอเดีย",
     "AI tools to generate your idea and validate it fast": "เครื่องมือ AI ที่ช่วยสร้างไอเดียและพิสูจน์ไอเดียได้อย่างรวดเร็ว",
     "A private community of builders doing it alongside you": "คอมมูนิตี้ส่วนตัวของเหล่านักสร้างที่ลงมือทำไปพร้อมกับคุณ",
-    "Join Free Today": "ลงชื่อรับราคา Early Bird",
+    "Join Free Today": "ลงชื่อรับราคาพิเศษ",
     "Ready to stop thinking and start building?": "พร้อมจะเลิกหาข้อมูล แล้วมาเริ่มลงมือสร้างไปด้วยกันหรือยัง?",
     "Enter your name and email. Day 1 of the challenge hits your inbox immediately. Five days from now you'll have a launched idea in front of real people.":
-        "กรอกชื่อ อีเมล และเลือกรูปแบบที่สนใจ เราจะส่งรายละเอียดและลิงก์ชำระเงินให้คุณทางอีเมลก่อนเปิดรับ ที่นั่งราคา Early Bird มีจำนวนจำกัด และจะเปิดให้ผู้ที่ลงชื่อก่อนตามลำดับ",
+        "กรอกชื่อ อีเมล และเลือกแพ็กเกจที่สนใจ เราจะส่งรายละเอียดและลิงก์ชำระเงินให้คุณทางอีเมลก่อนเปิดรับ ตอนนี้แพ็กเกจพื้นฐานและ VIP อยู่ในราคาพิเศษช่วงเปิดตัว",
     "You're in the challenge!": "คุณอยู่ในรายชื่อแล้ว!",
     "Check your inbox. Day 1 is already on its way. Your journey from idea to launch starts now.":
-        "ขอบคุณที่ลงชื่อ เราจะส่งรายละเอียดและลิงก์ชำระเงินสำหรับรูปแบบที่คุณเลือกให้ทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณใกล้จะเริ่มแล้ว",
+        "ขอบคุณที่ลงชื่อ เราจะส่งรายละเอียดและลิงก์ชำระเงินสำหรับแพ็กเกจที่คุณเลือกให้ทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณใกล้จะเริ่มแล้ว",
     "Don't see it? Check your spam folder and mark us as safe.":
         "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย",
     "Day 1 goes to your inbox immediately.": "เราจะส่งรายละเอียดและลิงก์ชำระเงินให้คุณทางอีเมล",
@@ -250,29 +250,28 @@ js = sub_exact(js, 'event:"generate_lead",currency:"USD",value:997,lead_source:"
 js = sub_exact(js, 'content_name:"Course Sign Up",status:"registered"',
                'content_name:"TH 5-Day Challenge Waitlist",status:"waitlisted"', 1)
 
-# Paid course: two packages with early-bird tiers. Shown as cards in the sign-up
-# section, and chosen on the form (saved with the sign-up as "online" / "vip").
+# Paid course: three packages. Shown as cards in the sign-up section and chosen on
+# the form (saved with the sign-up as "basic" / "vip" / "coaching").
 PLANS = [
-    {"name": "คอร์สออนไลน์", "note": "เรียนออนไลน์ได้จากทุกที่",
-     "tiers": [["฿1,500", "100 ที่นั่งแรก"], ["฿2,500", "หลังจาก 100 ที่นั่งแรกเต็ม"]]},
-    {"name": "VIP ออนไซต์ (In-Person)", "note": "เซสชันแบบพบตัวจริง · รับเพียง 15 ที่นั่ง",
-     "tiers": [["฿3,500", "5 ที่นั่งแรก"], ["฿4,500", "อีก 10 ที่นั่งที่เหลือ"]]},
+    {"name": "พื้นฐาน", "note": "คอร์สชาเลนจ์ 5 วัน", "was": "฿6,000", "price": "฿3,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
+    {"name": "VIP", "note": "คอร์สชาเลนจ์ 5 วัน แบบ VIP", "was": "฿12,990", "price": "฿9,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
+    {"name": "โค้ชชิ่งแบบตัวต่อตัว", "note": "One-on-One Coaching", "was": "", "price": "฿250,000", "unit": "/ เดือน", "tag": ""},
 ]
-PKG_CHOICES = [["online", "คอร์สออนไลน์", "฿1,500 สำหรับ 100 คนแรก"],
-               ["vip", "VIP ออนไซต์", "฿3,500 สำหรับ 5 คนแรก"]]
+PKG_CHOICES = [["basic", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
 J = lambda o: json.dumps(o, ensure_ascii=False)
 js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("div",{className:"yt-plans",children:' + J(PLANS) + '.map(p=>m.jsxs("div",{className:"yt-plan",children:['
-    'm.jsx("div",{className:"yt-plan-name",children:p.name}),'
+    'm.jsxs("div",{className:"yt-plan-info",children:[m.jsx("div",{className:"yt-plan-name",children:p.name}),'
     'm.jsx("div",{className:"yt-plan-note yt-thin",children:p.note}),'
-    'm.jsx("ul",{className:"yt-tiers",children:p.tiers.map((x,i)=>m.jsxs("li",{children:['
-    'm.jsx("span",{className:"yt-price",children:x[0]}),m.jsx("span",{className:"yt-tier",children:x[1]})]},i))})]},p.name))}),'
+    'p.tag&&m.jsx("div",{className:"yt-plan-tag",children:p.tag})]}),'
+    'm.jsxs("div",{className:"yt-plan-prices",children:[p.was&&m.jsx("s",{className:"yt-was yt-thin",children:p.was}),'
+    'm.jsxs("div",{className:"yt-price",children:[p.price,p.unit&&m.jsx("span",{className:"yt-unit yt-thin",children:" "+p.unit})]})]})]},p.name))}),'
     'm.jsx("ul",{className:"space-y-3",children:X1.map(', 1)
-js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"online"})', 1)
-js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"online"})', 1)
+js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"basic"})', 1)
+js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"basic"})', 1)
 js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'body:JSON.stringify({name:t.name,email:t.email,package:t.pkg,params', 1)
 js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
-    'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกรูปแบบที่สนใจ") + '}),'
+    'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกแพ็กเกจที่สนใจ") + '}),'
     'm.jsx("div",{className:"yt-pkgs",role:"radiogroup",children:' + J(PKG_CHOICES) + '.map(([k,l,d])=>m.jsxs("label",{className:"yt-pkg"+(t.pkg===k?" yt-pkg-on":""),children:['
     'm.jsx("input",{type:"radio",name:"pkg",value:k,checked:t.pkg===k,onChange:()=>a("pkg",k),className:"sr-only"}),'
     'm.jsx("span",{className:"yt-pkg-name",children:l}),m.jsx("span",{className:"yt-pkg-desc yt-thin",children:d})]},k))})]}),'
@@ -357,18 +356,17 @@ FONT_CSS = """@font-face{font-family:"Sukhumvit";src:url(/fonts/SukhumvitSet-Bol
 # Letter-spacing is dropped: tracking breaks Thai glyph clusters.
 TH_CSS = """.font-medium,.font-semibold{font-weight:400}
 .yt-thin{font-weight:200!important}
-.yt-plans{display:grid;gap:12px;grid-template-columns:1fr}
-@media (min-width:640px){.yt-plans{grid-template-columns:1fr 1fr}}
-.yt-plan{border:1px solid hsl(var(--primary-foreground)/.3);background:hsl(var(--primary-foreground)/.1);border-radius:16px;padding:18px 20px}
+.yt-plans{display:grid;gap:10px}
+.yt-plan{display:flex;justify-content:space-between;align-items:center;gap:16px;border:1px solid hsl(var(--primary-foreground)/.3);background:hsl(var(--primary-foreground)/.1);border-radius:16px;padding:16px 20px}
 .yt-plan-name{font-weight:700;font-size:1.125rem}
 .yt-plan-note{font-size:.875rem;opacity:.8;margin-top:2px}
-.yt-tiers{margin-top:12px;display:grid;gap:6px}
-.yt-tiers li{display:flex;align-items:baseline;gap:10px}
-.yt-price{font-weight:700;font-size:1.5rem;white-space:nowrap}
-.yt-tiers li+li .yt-price{font-size:1.125rem;opacity:.75}
-.yt-tier{font-size:.875rem;opacity:.85}
-.yt-pkgs{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-.yt-pkg{cursor:pointer;display:flex;flex-direction:column;gap:2px;border:2px solid hsl(var(--input));border-radius:12px;padding:12px 14px;transition:border-color .15s,background-color .15s}
+.yt-plan-tag{display:inline-block;margin-top:8px;font-size:.75rem;padding:2px 10px;border-radius:999px;background:hsl(var(--primary-foreground));color:hsl(var(--primary))}
+.yt-plan-prices{text-align:right;white-space:nowrap}
+.yt-was{display:block;font-size:.9rem;opacity:.7}
+.yt-price{font-weight:700;font-size:1.5rem;line-height:1.2}
+.yt-unit{font-size:.875rem;font-weight:200}
+.yt-pkgs{display:grid;gap:8px;grid-template-columns:1fr}
+.yt-pkg{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;border:2px solid hsl(var(--input));border-radius:12px;padding:12px 14px;transition:border-color .15s,background-color .15s}
 .yt-pkg-on{border-color:hsl(var(--primary));background:hsl(var(--primary)/.06)}
 .yt-pkg:focus-within{outline:2px solid hsl(var(--ring));outline-offset:2px}
 .yt-pkg-name{font-weight:700;font-size:.95rem}
@@ -385,8 +383,8 @@ css = FONT_CSS + css + TH_CSS
 # ---------------------------------------------------------------------------
 html = (SRC / "index.en.html").read_text()
 TITLE = "Yaru Create - ชาเลนจ์ 5 วัน: นำไอเดียของคุณออกมาหารายได้ด้วย AI"
-DESC = "ลงชื่อรอเข้าร่วมชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคา Early Bird เริ่มต้น ฿1,500"
-OG_DESC = "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์ ราคา Early Bird เริ่มต้น ฿1,500"
+DESC = "ลงชื่อรอเข้าร่วมชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
+OG_DESC = "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์ ราคาพิเศษเริ่มต้น ฿3,990"
 html = sub_exact(html, '<html lang="en">', '<html lang="th">', 1)
 html = sub_exact(html, "Yaru Create - Free 5-Day Challenge: Launch a Product Idea with AI", TITLE)
 html = sub_exact(html, "Join the free Yaru 5-Day Challenge and go from idea to launched product in one week. No code. No experience. Pick your idea, start building, and get it in front of real people. Free.", DESC, 1)
