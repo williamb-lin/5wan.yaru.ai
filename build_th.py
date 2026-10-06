@@ -60,7 +60,7 @@ T = {
     "Day 1 fixes this.": "เราช่วยคุณแก้ไขปัญหาอันนี้ได้ตั้งแต่วันที่ 1 แล้ว",
     "One idea. Chosen. Done. We give you the tools to pick and commit in hours, not weeks.":
         "หนึ่งไอเดีย เลือกแล้ว จบ เราให้เครื่องมือที่ช่วยให้คุณเลือกและตัดสินใจได้ในไม่กี่ชั่วโมง ไม่ใช่หลายสัปดาห์",
-    "Joshua Maddox, CEO Yaru": "Will Lin, Senior Director of Operations",
+    "Joshua Maddox, CEO Yaru": "Will Lin, COO ของ Yaru",
     # Who it's for
     "This Challenge Was Built for You. If...": "ชาเลนจ์นี้สร้างมาเพื่อคุณ ถ้า...",
     "You've been thinking about building something for months. But haven't started.":
@@ -109,7 +109,9 @@ T = {
         "เราทดสอบ Yaru ด้วยตัวเองก่อนเปิดตัว เราเชิญผู้คนมาร่วมเซสชันการเรียนรู้สดในหลายเมือง พวกเขามากันจริง เราทดสอบซ้ำ และได้สัญญาณตอบรับที่ชัดเจน นี่คือกระบวนการเดียวกับที่เราจะสอนคุณในวันที่ 3 ของชาเลนจ์นี้",
     "AI is simultaneously overhyped and underutilised. There are a lot of people online promising the world. We're not one of them. We show you what's actually working, through building, not talking.":
         "AI ถูกพูดถึงเกินจริง และในขณะเดียวกันก็ถูกใช้น้อยเกินไป มีคนมากมายบนโลกออนไลน์ที่สัญญาว่าจะให้ทุกอย่าง แต่เราไม่ใช่หนึ่งในนั้น เราแสดงให้คุณเห็นว่าอะไรได้ผลจริง ผ่านการลงมือสร้าง ไม่ใช่แค่พูด",
-    "CEO, Yaru": "CEO ของ Yaru",
+    "CEO, Yaru": "COO ของ Yaru",
+    "Joshua Maddox": "Will Lin",
+    "JM": "WL",
     # Final CTA
     "The builders who share consistently are the ones who keep building.":
         "ขอแค่ว่าคุณเป็นคนที่พยายามอย่างสม่ำเสมอ นี่แหละคือคนที่จะสามารถก้าวต่อไปได้เรื่อยๆ กับ AI",
@@ -325,7 +327,7 @@ THIN = [
     'className:"text-sm text-muted-foreground font-medium",children:"กำลังโหลด',  # loading
     'className:"text-xs text-muted-foreground mb-6 font-semibold tracking-widest uppercase"',  # tools label
     'className:"text-white/40 text-sm mt-2"',                                     # quote attribution
-    'className:"text-muted-foreground text-sm",children:"CEO',                    # CEO title
+    'className:"text-muted-foreground text-sm",children:"COO',                    # CEO title
     'className:"text-sm text-muted-foreground",children:"ไม่ต้องมีประสบการณ์',          # final CTA footnote
     'className:"text-sm text-muted-foreground",children:"ถ้าไม่เห็น',            # success footnote
     'className:"text-muted-foreground text-center text-sm mb-8"',                 # form subtitle
