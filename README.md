@@ -35,6 +35,7 @@ Check: `/healthz` returns `{"ok":true,"storage":"postgres","beam":"production","
 
 - **`/admin`**: every order with status (paid / pending / expired / cancelled / error), buyer, phone, package, amount, payment method and ad source; paid totals per package. Opening it also re-checks recent pending orders with Beam, in case a webhook was missed.
 - **`/admin/orders.csv`**: everything as a spreadsheet.
+- **Two payment modes.** Without Beam API keys, each tier sends the buyer to its reusable Beam **store link** (set in `server.js` → `PACKAGES[...].storeLink`); the order is saved as *pending* and payment is confirmed in Beam Lighthouse. With API keys, a one-off payment link is created per order and payment is tracked automatically.
 - Prices are set in `server.js` (`PACKAGES`, in satang); the page only sends which package. Change prices in both `server.js` and the cards in `build_th.py`.
 - The old `waitlist` table, if present, is left untouched.
 

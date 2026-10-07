@@ -25,10 +25,16 @@ const LOCAL_FILE = path.join(__dirname, "data", "orders.local.json");
 
 // Prices live here, never in the browser: the form only says which package.
 // Amounts are in satang (Beam uses the smallest currency unit): 399000 = ฿3,990.
+// storeLink: the reusable Beam link made in Lighthouse for that tier. It is used when
+// the Beam API keys aren't set; with keys, a one-off payment link is created per order
+// instead (tracks each payment automatically and returns the buyer to the thank-you page).
 const PACKAGES = {
-  basic: { label: "Basic", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000 },
-  vip: { label: "VIP", item: "ชาเลนจ์ 5 วัน: แพ็กเกจ VIP", amount: 999000 },
-  coaching: { label: "1:1 Coaching", item: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)", amount: 25000000 },
+  basic: { label: "Basic", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
+           storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/EssentialT" },
+  vip: { label: "VIP", item: "ชาเลนจ์ 5 วัน: แพ็กเกจ VIP", amount: 999000,
+         storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/tsn4zEvSid" },
+  coaching: { label: "1:1 Coaching", item: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)", amount: 25000000,
+              storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/1on1Coaching" },
 };
 const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
 
@@ -254,6 +260,26 @@ async function main() {
           await store.update(order.ref, { status: "paid", paid_at: new Date().toISOString() });
           console.log(`[beam] order ${order.ref} paid (${order.package})`);
         }
+      } else if (type === "charge.succeeded" && event.source !== "PAYMENT_LINK") {
+        // Store-link payment: no order ref, so match the newest unpaid store-link order
+        // with the same email and amount from the last 3 days. Unmatched ones are logged.
+        const email = String(event.customer?.email || "").trim().toLowerCase();
+        const order = (await store.list()).find(
+          (r) => r.beam_env === "store_link" && r.status === "pending" && email && r.email === email &&
+            Number(r.amount) === Number(event.amount) && Date.now() - new Date(r.created_at) < 3 * 864e5
+        );
+        if (order) {
+          const p = event.customer?.primaryPhone;
+          await store.update(order.ref, {
+            status: "paid",
+            paid_at: event.transactionTime || new Date().toISOString(),
+            phone: p?.number ? (p.number.startsWith("0") ? p.number : `${p.countryCode || ""}${p.number}`) : order.phone || null,
+            payment_method: event.paymentMethod?.paymentMethodType || null,
+          });
+          console.log(`[beam] store-link order ${order.ref} matched to charge ${event.chargeId}`);
+        } else {
+          console.log(`[beam] store-link charge ${event.chargeId} (${event.amount}) not matched to an order`);
+        }
       } else if (type === "charge.succeeded" && event.source === "PAYMENT_LINK" && event.sourceId) {
         // Carries the buyer's phone and payment method; also marks paid if it arrives first.
         const order = await store.byLink(event.sourceId);
@@ -279,7 +305,6 @@ async function main() {
 
   app.post("/api/checkout", async (req, res) => {
     if (rateLimited(req.ip)) return res.status(429).json({ message: "Too many requests" });
-    if (!BEAM.ready) return res.status(503).json({ message: "Payments are not set up yet" });
     const name = clip(req.body?.name, 100);
     const email = clip(req.body?.email, 254).toLowerCase();
     const pkgKey = clip(req.body?.package, 20);
@@ -291,6 +316,19 @@ async function main() {
     const ref = "5W-" + crypto.randomBytes(5).toString("hex").toUpperCase();
     const order = { ref, name, email, package: pkgKey, amount: pkg.amount, beam_env: BEAM.env, params, referrer: clip(req.body?.referrer, 500) };
     for (const f of AD_FIELDS) order[f] = params[f] || null;
+
+    if (!BEAM.ready) {
+      // No API keys: save the buyer, then send them to the tier's reusable Beam link.
+      order.beam_env = "store_link";
+      try {
+        await store.create(order);
+        console.log(`[checkout] order ${ref} -> store link (${pkgKey}, source: ${order.utm_source || "direct"})`);
+        return res.json({ url: pkg.storeLink });
+      } catch (err) {
+        console.error(`[checkout] order ${ref} failed:`, err.message);
+        return res.status(500).json({ message: "Could not start payment" });
+      }
+    }
 
     const base = (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/+$/, "");
     try {
@@ -338,7 +376,9 @@ async function main() {
       byPackage[k].sum += Number(r.amount);
     }
     const revenue = paid.reduce((s, r) => s + Number(r.amount), 0);
-    const mode = BEAM.ready ? (BEAM.env === "production" ? "LIVE payments" : "TEST payments (Beam playground)") : "Beam not connected";
+    const mode = BEAM.ready
+      ? BEAM.env === "production" ? "LIVE payments (Beam API)" : "TEST payments (Beam playground)"
+      : "Beam store links: confirm payments in Beam Lighthouse";
     res.set("Cache-Control", "no-store").send(`<!doctype html><html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
 <title>5wan orders (${paid.length} paid)</title>
@@ -351,7 +391,7 @@ background:#c62a35;color:#fff;border-radius:8px;text-decoration:none}.wrap{overf
 <h1>Orders: ${paid.length} paid · ${esc(baht(revenue))}</h1>
 <div class="muted"><span class="mode">${esc(mode)}</span> · storage: ${store.kind}</div>
 <div class="muted">Paid by package: ${Object.entries(byPackage).map(([k, v]) => `${esc(k)} ${v.n} (${esc(baht(v.sum))})`).join(" · ") || "none yet"}</div>
-<div class="muted">Not paid: ${rows.length - paid.length} (pending, expired, cancelled or failed)</div>
+<div class="muted">Not marked paid: ${rows.length - paid.length}${BEAM.ready ? " (pending, expired, cancelled or failed)" : " (sent to Beam; with store links, check Beam Lighthouse for who actually paid)"}</div>
 <a class="btn" href="/admin/orders.csv">Download CSV</a>
 <div class="wrap"><table><thead><tr><th>Created (Bangkok)</th><th>Status</th><th>Order</th><th>Name</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Paid (Bangkok)</th><th>Method</th><th>utm_source</th><th>utm_campaign</th></tr></thead><tbody>
 ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${STATUS_COLOR[r.status] || "#1f1a14"};font-weight:600">${esc(r.status)}</td><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(PACKAGES[r.package]?.label || r.package)}</td><td>${esc(baht(r.amount))}</td><td>${esc(fmtDate(r.paid_at))}</td><td>${esc(r.payment_method)}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td></tr>`).join("\n")}
@@ -373,7 +413,7 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
   });
 
   app.get("/healthz", (_req, res) =>
-    res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "not-configured", webhook: Boolean(BEAM.hmacKey) })
+    res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "store-links", webhook: Boolean(BEAM.hmacKey) })
   );
 
   app.use(express.static(PUBLIC_DIR, {
