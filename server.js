@@ -345,7 +345,7 @@ async function main() {
             orderItems: [{ itemName: pkg.item, price: pkg.amount, quantity: 1, productId: pkgKey }],
           },
           collectPhoneNumber: true,
-          redirectUrl: `${base}/?payment=success&tier=${pkgKey}&order=${ref}`, // tier lets ad tags report the right value
+          redirectUrl: `${base}/thank-you?tier=${pkgKey}&order=${ref}`, // tier lets ad tags report the right value
           cancelUrl: `${base}/?payment=cancelled#signup`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         },
@@ -415,6 +415,18 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
   app.get("/healthz", (_req, res) =>
     res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "store-links", webhook: Boolean(BEAM.hmacKey) })
   );
+
+  // One confirmation page for every tier: /thank-you (ad platforms' purchase tags live there).
+  // Older return links (/?payment=success&tier=…) are forwarded to it, keeping their query.
+  app.get("/", (req, res, next) => {
+    if (req.query.payment !== "success") return next();
+    const { payment, ...rest } = req.query;
+    const qs = new URLSearchParams(rest).toString();
+    res.redirect(302, "/thank-you" + (qs ? "?" + qs : ""));
+  });
+  app.get("/thank-you", (_req, res) => {
+    res.set("Cache-Control", "no-cache").sendFile(path.join(PUBLIC_DIR, "thank-you.html"));
+  });
 
   app.use(express.static(PUBLIC_DIR, {
     setHeaders(res, file) {
