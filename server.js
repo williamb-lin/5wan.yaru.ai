@@ -345,7 +345,7 @@ async function main() {
             orderItems: [{ itemName: pkg.item, price: pkg.amount, quantity: 1, productId: pkgKey }],
           },
           collectPhoneNumber: true,
-          redirectUrl: `${base}/?payment=success&order=${ref}`,
+          redirectUrl: `${base}/?payment=success&tier=${pkgKey}&order=${ref}`, // tier lets ad tags report the right value
           cancelUrl: `${base}/?payment=cancelled#signup`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         },
