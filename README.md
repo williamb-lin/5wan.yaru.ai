@@ -58,4 +58,5 @@ and commit the updated `public/` files.
 
 ## Tracking scripts on the page
 
-None for now. The English site's Google Tag Manager container (which fires the English TikTok pixel), Meta Pixel and ActiveCampaign tracking were removed so the Thai A/B test doesn't mix with English data. The Thai TikTok pixel will be added in `build_th.py` once it's created.
+- **LINE Tag** (`34e8f29d-a401-4dcc-b551-e49132bbd5d4`): base code in `<head>` sends a page view on every visit; a **Conversion** (`_lt('send','cv',{type:'Conversion'})`) fires when someone clicks the pay button. Both are added in `build_th.py`.
+- No Google, Meta, TikTok or ActiveCampaign tracking (the English site's were removed so the Thai test doesn't mix with English data).

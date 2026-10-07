@@ -20,13 +20,13 @@ css = (SRC / "index-K9wBeB5c.css").read_text()
 T = {
     # Loading / nav
     "Loading Yaru Create...": "กำลังโหลด Yaru Create...",
-    "Join Free": "สมัครเลย",
+    "Join Free": "ซื้อคอร์ส",
     # Hero
     "FREE 5-Day Challenge": "ชาเลนจ์ 5 วัน · ราคาพิเศษช่วงเปิดตัว",
     "Launch a product idea in 5 days with AI.": "นำไอเดียของคุณออกมาหารายได้ภายใน 5 วัน ด้วย AI",
     "No code. No experience. No excuses. Pick your idea, start building, and get it in front of real people. In a week, for free.":
         "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์",
-    "Join the Free Challenge": "สมัครรับราคาพิเศษ",
+    "Join the Free Challenge": "ซื้อคอร์สราคาพิเศษ",
     "See What's Inside": "ดูว่ามีอะไรบ้าง",
     # Tools strip
     "Build with the world's leading AI tools": "สร้างด้วยเครื่องมือ AI ชั้นนำของโลก",
@@ -117,7 +117,7 @@ T = {
         "ขอแค่ว่าคุณเป็นคนที่พยายามอย่างสม่ำเสมอ นี่แหละคือคนที่จะสามารถก้าวต่อไปได้เรื่อยๆ กับ AI",
     "In five days you'll do more than most people do in months of thinking about it. AI is changing everything. Don't deal with it by watching from the sidelines.":
         "ในห้าวัน คุณจะทำได้มากกว่าที่คนส่วนใหญ่ทำในหลายเดือนที่เอาแต่คิด AI กำลังเปลี่ยนทุกอย่าง อย่ารับมือกับมันด้วยการยืนดูอยู่ข้างสนาม",
-    "Join the Free 5-Day Challenge": "สมัครชาเลนจ์ 5 วัน",
+    "Join the Free 5-Day Challenge": "ซื้อคอร์สชาเลนจ์ 5 วัน",
     "No credit card. No experience required. Just show up for five days.":
         "ไม่ต้องมีประสบการณ์ แค่มาให้ครบห้าวัน",
     # Signup
@@ -126,13 +126,13 @@ T = {
     "Access to 100+ vetted AI business ideas": "เข้าถึงไอเดียธุรกิจ AI ที่คัดสรรแล้วกว่า 100 ไอเดีย",
     "AI tools to generate your idea and validate it fast": "เครื่องมือ AI ที่ช่วยสร้างไอเดียและพิสูจน์ไอเดียได้อย่างรวดเร็ว",
     "A private community of builders doing it alongside you": "คอมมูนิตี้ส่วนตัวของเหล่านักสร้างที่ลงมือทำไปพร้อมกับคุณ",
-    "Join Free Today": "สมัครรับราคาพิเศษ",
+    "Join Free Today": "ซื้อคอร์สราคาพิเศษ",
     "Ready to stop thinking and start building?": "พร้อมจะเลิกหาข้อมูล แล้วมาเริ่มลงมือสร้างไปด้วยกันหรือยัง?",
     "Enter your name and email. Day 1 of the challenge hits your inbox immediately. Five days from now you'll have a launched idea in front of real people.":
         "เลือกแพ็กเกจ กรอกชื่อและอีเมล แล้วชำระเงินได้ทันทีผ่าน Beam ตอนนี้แพ็กเกจพื้นฐานและ VIP อยู่ในราคาพิเศษช่วงเปิดตัว",
     "You're in the challenge!": "ชำระเงินเรียบร้อย ยินดีต้อนรับ!",
     "Check your inbox. Day 1 is already on its way. Your journey from idea to launch starts now.":
-        "ขอบคุณที่สมัครชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว",
+        "ขอบคุณที่ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว",
     "Don't see it? Check your spam folder and mark us as safe.":
         "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย",
     "Day 1 goes to your inbox immediately.": "กรอกข้อมูล แล้วไปชำระเงินที่หน้าชำระเงินของ Beam",
@@ -141,7 +141,7 @@ T = {
     "Email Address": "อีเมล",
     "Your email address": "อีเมลของคุณ",
     "Signing you up...": "กำลังไปหน้าชำระเงิน...",
-    "Start the Free Challenge": "ไปหน้าชำระเงิน",
+    "Start the Free Challenge": "ซื้อคอร์สและชำระเงิน",
     "No spam. No credit card. Unsubscribe any time.": "ชำระเงินอย่างปลอดภัยผ่าน Beam · ไม่มีสแปม",
     "Something went wrong": "เกิดข้อผิดพลาด",
     "There was an issue signing you up. Please try again.": "ไม่สามารถไปหน้าชำระเงินได้ กรุณาลองใหม่อีกครั้ง",
@@ -258,6 +258,7 @@ PLANS = [
     {"name": "โค้ชชิ่งแบบตัวต่อตัว", "note": "One-on-One Coaching", "was": "", "price": "฿250,000", "unit": "/ เดือน", "tag": ""},
 ]
 PKG_CHOICES = [["basic", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
+LINE_TAG_ID = "34e8f29d-a401-4dcc-b551-e49132bbd5d4"
 J = lambda o: json.dumps(o, ensure_ascii=False)
 js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("div",{className:"yt-plans",children:' + J(PLANS) + '.map(p=>m.jsxs("div",{className:"yt-plan",children:['
@@ -269,12 +270,17 @@ js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("ul",{className:"space-y-3",children:X1.map(', 1)
 js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"basic"})', 1)
 js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"basic"})', 1)
+# LINE Tag conversion: fired the moment someone clicks the pay button (form submit),
+# whether or not they finish paying. The redirect to Beam waits 400ms so the LINE
+# beacon has time to leave the page.
+js = sub_exact(js, 'u.preventDefault(),o(!0);',
+               'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);', 1)
 # On success the server returns Beam's payment-link URL: send the buyer there (no toast,
 # no "you're in" card). Beam sends them back to /?payment=success, which shows the
 # thank-you card and scrolls to it.
 js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
 js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 is on its way."}),n({name:"",email:"",pkg:"basic"})',
-               'window.location.assign(_ck.url)', 1)
+               'setTimeout(()=>window.location.assign(_ck.url),400)', 1)
 js = sub_exact(js, '[i,s]=v.useState(!1),l=async u=>',
                '[i,s]=v.useState(()=>new URLSearchParams(location.search).get("payment")==="success"),l=async u=>', 1)
 js = sub_exact(js, ',[u]:c}))};return m.jsx("section",{id:"signup"',
@@ -393,7 +399,7 @@ css = FONT_CSS + css + TH_CSS
 # ---------------------------------------------------------------------------
 html = (SRC / "index.en.html").read_text()
 TITLE = "Yaru Create - ชาเลนจ์ 5 วัน: นำไอเดียของคุณออกมาหารายได้ด้วย AI"
-DESC = "สมัครชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
+DESC = "ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
 OG_DESC = "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์ ราคาพิเศษเริ่มต้น ฿3,990"
 html = sub_exact(html, '<html lang="en">', '<html lang="th">', 1)
 html = sub_exact(html, "Yaru Create - Free 5-Day Challenge: Launch a Product Idea with AI", TITLE)
@@ -415,6 +421,31 @@ for name in ["Google Tag Manager", "Google Tag Manager (TikTok)", "Meta Pixel Co
     html, n = re.subn(r"\s*<!-- " + re.escape(name) + r" -->.*?<!-- End " + re.escape(name) + r" -->", "", html, flags=re.S)
     if n != 1:
         sys.exit(f"tracking block not found: {name}")
+LINE_TAG_BASE = """<!-- LINE Tag Base Code -->
+<!-- Do Not Modify -->
+<script>
+(function(g,d,o){
+  g._ltq=g._ltq||[];g._lt=g._lt||function(){g._ltq.push(arguments)};
+  var h='https://d.line-scdn.net';
+  var s=d.createElement('script');s.async=1;
+  s.src=o||h+'/n/line_tag/public/release/v1/lt.js';
+  var t=d.getElementsByTagName('script')[0];t.parentNode.insertBefore(s,t);
+    })(window, document);
+_lt('init', {
+  customerType: 'lap',
+  tagId: '34e8f29d-a401-4dcc-b551-e49132bbd5d4'
+});
+_lt('send', 'pv', ['34e8f29d-a401-4dcc-b551-e49132bbd5d4']);
+</script>
+<noscript>
+  <img height="1" width="1" style="display:none"
+       src="https://tr.line.me/tag.gif?c_t=lap&t_id=34e8f29d-a401-4dcc-b551-e49132bbd5d4&e=pv&noscript=1" />
+</noscript>
+<!-- End LINE Tag Base Code -->
+"""
+# after the charset/viewport tags, so the UTF-8 declaration stays first in <head>
+VIEWPORT = '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />\n'
+html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE, 1)
 html = sub_exact(html, "/assets/index-DQqFpzXo.js", "/assets/index-th.js", 1)
 html = sub_exact(html, "/assets/index-K9wBeB5c.css", "/assets/index-th.css", 1)
 (OUT / "index.html").write_text(html)
