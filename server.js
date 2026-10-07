@@ -30,11 +30,11 @@ const LOCAL_FILE = path.join(__dirname, "data", "orders.local.json");
 // instead (tracks each payment automatically and returns the buyer to the thank-you page).
 const PACKAGES = {
   basic: { label: "Basic", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
-           storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/EssentialT" },
+           storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/EssentialT1" },
   vip: { label: "VIP", item: "ชาเลนจ์ 5 วัน: แพ็กเกจ VIP", amount: 999000,
-         storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/tsn4zEvSid" },
+         storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/VIPT1" },
   coaching: { label: "1:1 Coaching", item: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)", amount: 25000000,
-              storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/1on1Coaching" },
+              storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/1on1Coach" },
 };
 const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
 
