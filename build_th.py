@@ -270,6 +270,16 @@ js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("ul",{className:"space-y-3",children:X1.map(', 1)
 js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"essential"})', 1)
 js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"essential"})', 1)
+# Thank-you state (after payment): the section drops the headline, pricing and list,
+# shows the confirmation card at the top, and a full-width photo of a Yaru session below.
+js = sub_exact(js, 'className:"py-24 px-4 bg-primary text-primary-foreground"',
+               'className:"py-24 px-4 bg-primary text-primary-foreground"+(i?" yt-paid":"")', 1)
+js = sub_exact(js, 'i?m.jsx(Nr,{className:"bg-primary-foreground text-foreground",',
+               'i?m.jsxs(m.Fragment,{children:[m.jsx(Nr,{className:"bg-primary-foreground text-foreground yt-paid-card",', 1)
+js = sub_exact(js, ':m.jsx(Nr,{className:"bg-primary-foreground text-foreground shadow-2xl"',
+               ',m.jsx("img",{src:"/assets/thank-you-crowd.jpg",alt:' + json.dumps("ห้องเวิร์กช็อปของ Yaru ที่เต็มไปด้วยผู้เข้าร่วม", ensure_ascii=False)
+               + ',className:"yt-thanks-photo"})]}):m.jsx(Nr,{className:"bg-primary-foreground text-foreground shadow-2xl"', 1)
+
 # LINE Tag conversion: fired the moment someone clicks the pay button (form submit),
 # whether or not they finish paying. The redirect to Beam waits 400ms so the LINE
 # beacon has time to leave the page.
@@ -372,6 +382,11 @@ FONT_CSS = """@font-face{font-family:"Sukhumvit";src:url(/fonts/SukhumvitSet-Bol
 # Letter-spacing is dropped: tracking breaks Thai glyph clusters.
 TH_CSS = """.font-medium,.font-semibold{font-weight:400}
 .yt-thin{font-weight:200!important}
+.yt-paid{padding-bottom:0;overflow:hidden}
+.yt-paid .grid{display:block}
+.yt-paid .grid>div:first-child{display:none}
+.yt-paid-card{max-width:640px;margin:0 auto}
+.yt-thanks-photo{display:block;width:100vw;max-width:none;height:auto;margin:64px 0 0 calc(50% - 50vw)}
 .yt-plans{display:grid;gap:10px}
 .yt-plan{display:flex;justify-content:space-between;align-items:center;gap:16px;border:1px solid hsl(var(--primary-foreground)/.3);background:hsl(var(--primary-foreground)/.1);border-radius:16px;padding:16px 20px}
 .yt-plan-name{font-weight:700;font-size:1.125rem}
