@@ -29,7 +29,7 @@ const LOCAL_FILE = path.join(__dirname, "data", "orders.local.json");
 // the Beam API keys aren't set; with keys, a one-off payment link is created per order
 // instead (tracks each payment automatically and returns the buyer to the thank-you page).
 const PACKAGES = {
-  basic: { label: "Basic", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
+  essential: { label: "Essential", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
            storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/EssentialT1" },
   vip: { label: "VIP", item: "ชาเลนจ์ 5 วัน: แพ็กเกจ VIP", amount: 999000,
          storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/VIPT1" },

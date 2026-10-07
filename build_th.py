@@ -251,13 +251,13 @@ js = sub_exact(js, 'content_name:"Course Sign Up",status:"registered"',
                'content_name:"TH 5-Day Challenge Checkout",status:"checkout_started"', 1)
 
 # Paid course: three packages. Shown as cards in the sign-up section and chosen on
-# the form (saved with the sign-up as "basic" / "vip" / "coaching").
+# the form (saved with the sign-up as "essential" / "vip" / "coaching").
 PLANS = [
     {"name": "พื้นฐาน", "note": "คอร์สชาเลนจ์ 5 วัน", "was": "฿6,000", "price": "฿3,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
     {"name": "VIP", "note": "คอร์สชาเลนจ์ 5 วัน แบบ VIP", "was": "฿12,990", "price": "฿9,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
     {"name": "โค้ชชิ่งแบบตัวต่อตัว", "note": "One-on-One Coaching", "was": "", "price": "฿250,000", "unit": "/ เดือน", "tag": ""},
 ]
-PKG_CHOICES = [["basic", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
+PKG_CHOICES = [["essential", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
 LINE_TAG_ID = "34e8f29d-a401-4dcc-b551-e49132bbd5d4"
 J = lambda o: json.dumps(o, ensure_ascii=False)
 js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
@@ -268,8 +268,8 @@ js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsxs("div",{className:"yt-plan-prices",children:[p.was&&m.jsx("s",{className:"yt-was yt-thin",children:p.was}),'
     'm.jsxs("div",{className:"yt-price",children:[p.price,p.unit&&m.jsx("span",{className:"yt-unit yt-thin",children:" "+p.unit})]})]})]},p.name))}),'
     'm.jsx("ul",{className:"space-y-3",children:X1.map(', 1)
-js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"basic"})', 1)
-js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"basic"})', 1)
+js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"essential"})', 1)
+js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"essential"})', 1)
 # LINE Tag conversion: fired the moment someone clicks the pay button (form submit),
 # whether or not they finish paying. The redirect to Beam waits 400ms so the LINE
 # beacon has time to leave the page.
@@ -279,7 +279,7 @@ js = sub_exact(js, 'u.preventDefault(),o(!0);',
 # no "you're in" card). Beam sends them back to /?payment=success, which shows the
 # thank-you card and scrolls to it.
 js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
-js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 is on its way."}),n({name:"",email:"",pkg:"basic"})',
+js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 is on its way."}),n({name:"",email:"",pkg:"essential"})',
                'setTimeout(()=>window.location.assign(_ck.url),400)', 1)
 js = sub_exact(js, '[i,s]=v.useState(!1),l=async u=>',
                '[i,s]=v.useState(()=>new URLSearchParams(location.search).get("payment")==="success"),l=async u=>', 1)
