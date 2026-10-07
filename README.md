@@ -39,10 +39,6 @@ Check: `/healthz` returns `{"ok":true,"storage":"postgres","beam":"production","
 - Prices are set in `server.js` (`PACKAGES`, in satang); the page only sends which package. Change prices in both `server.js` and the cards in `build_th.py`.
 - The old `waitlist` table, if present, is left untouched.
 
-## Confirmation page
-
-`public/thank-you.html`, served at **`/thank-you`**: one page for every tier. Set each Beam link's *Redirect URL* to `https://5wan.yaru.ai/thank-you` (optionally `?tier=essential|vip|coaching` so purchase tags can report the amount). Ad platforms' purchase/conversion tags go in this file. Old return links (`/?payment=success…`) are forwarded here.
-
 ## Tagging ad links
 
 Put UTM tags on the landing-page ad URL so `/admin` can tell sources apart, e.g.
