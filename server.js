@@ -160,7 +160,7 @@ async function beamRequest(method, urlPath, body, idempotencyKey) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(`Beam ${method} ${urlPath} -> ${res.status} ${data?.error?.errorCode || ""}`);
+    const err = new Error(`Beam ${method} ${urlPath} -> ${res.status} ${data?.error?.errorCode || ""} ${data?.error?.errorMessage || ""}`.trim());
     err.status = res.status;
     throw err;
   }
@@ -343,6 +343,15 @@ async function main() {
             description: `Yaru 5-Day Challenge – ${pkg.label}`,
             referenceId: ref,
             orderItems: [{ itemName: pkg.item, price: pkg.amount, quantity: 1, productId: pkgKey }],
+          },
+          // The account has no default methods for API links, so list them (Beam rejects a link with none).
+          linkSettings: {
+            card: { isEnabled: true },
+            qrPromptPay: { isEnabled: true },
+            eWallets: { isEnabled: true },
+            mobileBanking: { isEnabled: true },
+            cardInstallments: { isEnabled: false },
+            buyNowPayLater: { isEnabled: false },
           },
           collectPhoneNumber: true,
           redirectUrl: `${base}/?payment=success&tier=${pkgKey}&order=${ref}`, // tier lets ad tags report the right value
