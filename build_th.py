@@ -130,11 +130,6 @@ T = {
     "Ready to stop thinking and start building?": "พร้อมจะเลิกหาข้อมูล แล้วมาเริ่มลงมือสร้างไปด้วยกันหรือยัง?",
     "Enter your name and email. Day 1 of the challenge hits your inbox immediately. Five days from now you'll have a launched idea in front of real people.":
         "เลือกแพ็กเกจ กรอกชื่อและอีเมล แล้วชำระเงินได้ทันทีผ่าน Beam ตอนนี้แพ็กเกจพื้นฐานและ VIP อยู่ในราคาพิเศษช่วงเปิดตัว",
-    "You're in the challenge!": "ชำระเงินเรียบร้อย ยินดีต้อนรับ!",
-    "Check your inbox. Day 1 is already on its way. Your journey from idea to launch starts now.":
-        "ขอบคุณที่ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว",
-    "Don't see it? Check your spam folder and mark us as safe.":
-        "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย",
     "Day 1 goes to your inbox immediately.": "กรอกข้อมูล แล้วไปชำระเงินที่หน้าชำระเงินของ Beam",
     "First Name": "ชื่อจริง",
     "Your first name": "ชื่อจริงของคุณ",
@@ -270,31 +265,25 @@ js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("ul",{className:"space-y-3",children:X1.map(', 1)
 js = sub_exact(js, 'v.useState({name:"",email:""})', 'v.useState({name:"",email:"",pkg:"essential"})', 1)
 js = sub_exact(js, 'n({name:"",email:""})', 'n({name:"",email:"",pkg:"essential"})', 1)
-# Thank-you state (after payment): the section drops the headline, pricing and list,
-# shows the confirmation card at the top, and a full-width photo of a Yaru session below.
-js = sub_exact(js, 'className:"py-24 px-4 bg-primary text-primary-foreground"',
-               'className:"py-24 px-4 bg-primary text-primary-foreground"+(i?" yt-paid":"")', 1)
-js = sub_exact(js, 'i?m.jsx(Nr,{className:"bg-primary-foreground text-foreground",',
-               'i?m.jsxs(m.Fragment,{children:[m.jsx(Nr,{className:"bg-primary-foreground text-foreground yt-paid-card",', 1)
-js = sub_exact(js, ':m.jsx(Nr,{className:"bg-primary-foreground text-foreground shadow-2xl"',
-               ',m.jsx("img",{src:"/assets/thank-you-crowd.jpg",alt:' + json.dumps("ห้องเวิร์กช็อปของ Yaru ที่เต็มไปด้วยผู้เข้าร่วม", ensure_ascii=False)
-               + ',className:"yt-thanks-photo"})]}):m.jsx(Nr,{className:"bg-primary-foreground text-foreground shadow-2xl"', 1)
+# No thank-you content on the landing page: buyers go to the separate /thank-you page
+# (public/thank-you.html). The original bundle's "you're in" card is cut out entirely,
+# leaving only the order form in that column.
+_a = 'i?m.jsx(Nr,{className:"bg-primary-foreground text-foreground",'
+_b = ':m.jsx(Nr,{className:"bg-primary-foreground text-foreground shadow-2xl"'
+assert js.count(_a) == 1 and js.count(_b) == 1, "success card anchors changed"
+_i = js.index(_a); _j = js.index(_b, _i)
+js = js[:_i] + js[_j + 1:]
 
 # LINE Tag conversion: fired the moment someone clicks the pay button (form submit),
 # whether or not they finish paying. The redirect to Beam waits 400ms so the LINE
 # beacon has time to leave the page.
 js = sub_exact(js, 'u.preventDefault(),o(!0);',
                'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);', 1)
-# On success the server returns Beam's payment-link URL: send the buyer there (no toast,
-# no "you're in" card). Beam sends them back to /?payment=success, which shows the
-# thank-you card and scrolls to it.
+# On success the server returns Beam's payment-link URL: send the buyer there (no toast).
+# After paying, Beam sends them to the separate /thank-you page.
 js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
 js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 is on its way."}),n({name:"",email:"",pkg:"essential"})',
                'setTimeout(()=>window.location.assign(_ck.url),400)', 1)
-js = sub_exact(js, '[i,s]=v.useState(!1),l=async u=>',
-               '[i,s]=v.useState(()=>new URLSearchParams(location.search).get("payment")==="success"),l=async u=>', 1)
-js = sub_exact(js, ',[u]:c}))};return m.jsx("section",{id:"signup"',
-               ',[u]:c}))};v.useEffect(()=>{if(i){setTimeout(()=>{const el=document.querySelector("#signup h3")||document.getElementById("signup");el&&el.scrollIntoView({block:"center"})},400)}},[]);return m.jsx("section",{id:"signup"', 1)
 js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'body:JSON.stringify({name:t.name,email:t.email,package:t.pkg,params', 1)
 js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกแพ็กเกจที่สนใจ") + '}),'
@@ -345,7 +334,6 @@ THIN = [
     'className:"text-white/40 text-sm mt-2"',                                     # quote attribution
     'className:"text-muted-foreground text-sm",children:"COO',                    # CEO title
     'className:"text-sm text-muted-foreground",children:"ไม่ต้องมีประสบการณ์',          # final CTA footnote
-    'className:"text-sm text-muted-foreground",children:"ถ้าไม่เห็น',            # success footnote
     'className:"text-muted-foreground text-center text-sm mb-8"',                 # form subtitle
     'className:"text-xs text-muted-foreground text-center"',                      # form footnote
     'className:"text-sm opacity-60 italic"',                                      # Day 5 quote
@@ -382,11 +370,6 @@ FONT_CSS = """@font-face{font-family:"Sukhumvit";src:url(/fonts/SukhumvitSet-Bol
 # Letter-spacing is dropped: tracking breaks Thai glyph clusters.
 TH_CSS = """.font-medium,.font-semibold{font-weight:400}
 .yt-thin{font-weight:200!important}
-.yt-paid{padding-bottom:0;overflow:hidden}
-.yt-paid .grid{display:block}
-.yt-paid .grid>div:first-child{display:none}
-.yt-paid-card{max-width:640px;margin:0 auto}
-.yt-thanks-photo{display:block;width:100vw;max-width:none;height:auto;margin:64px 0 0 calc(50% - 50vw)}
 .yt-plans{display:grid;gap:10px}
 .yt-plan{display:flex;justify-content:space-between;align-items:center;gap:16px;border:1px solid hsl(var(--primary-foreground)/.3);background:hsl(var(--primary-foreground)/.1);border-radius:16px;padding:16px 20px}
 .yt-plan-name{font-weight:700;font-size:1.125rem}

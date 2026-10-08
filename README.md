@@ -39,6 +39,10 @@ Check: `/healthz` returns `{"ok":true,"storage":"postgres","beam":"production","
 - Prices are set in `server.js` (`PACKAGES`, in satang); the page only sends which package. Change prices in both `server.js` and the cards in `build_th.py`.
 - The old `waitlist` table, if present, is left untouched.
 
+## Confirmation page
+
+`public/thank-you.html`, served at **`/thank-you`**: a standalone page, separate from the landing page (it loads none of the landing page's code). Every tier lands here after paying: Beam payment links are created with `redirectUrl` = `/thank-you?tier=essential|vip|coaching&order=…`. **Ad platforms' purchase tags go in this file only.** The landing page contains no confirmation content; old `/?payment=success…` links are forwarded here.
+
 ## Tagging ad links
 
 Put UTM tags on the landing-page ad URL so `/admin` can tell sources apart, e.g.

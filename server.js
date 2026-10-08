@@ -27,7 +27,7 @@ const LOCAL_FILE = path.join(__dirname, "data", "orders.local.json");
 // Amounts are in satang (Beam uses the smallest currency unit): 399000 = ฿3,990.
 // storeLink: the reusable Beam link made in Lighthouse for that tier. It is used when
 // the Beam API keys aren't set; with keys, a one-off payment link is created per order
-// instead (tracks each payment automatically and returns the buyer to the thank-you page).
+// instead (tracks each payment automatically and sends the buyer to /thank-you).
 const PACKAGES = {
   essential: { label: "Essential", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
            storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/EssentialT1" },
@@ -354,7 +354,7 @@ async function main() {
             buyNowPayLater: { isEnabled: false },
           },
           collectPhoneNumber: true,
-          redirectUrl: `${base}/?payment=success&tier=${pkgKey}&order=${ref}`, // tier lets ad tags report the right value
+          redirectUrl: `${base}/thank-you?tier=${pkgKey}&order=${ref}`, // separate confirmation page; tier lets ad tags report the value
           cancelUrl: `${base}/?payment=cancelled#signup`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         },
@@ -424,6 +424,19 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
   app.get("/healthz", (_req, res) =>
     res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "store-links", webhook: Boolean(BEAM.hmacKey) })
   );
+
+  // The confirmation page is its own standalone file (public/thank-you.html), not part of
+  // the landing page. Ad platforms' purchase tags go there. Old return links that pointed
+  // at the landing page (/?payment=success&…) are forwarded to it with their query.
+  app.get("/thank-you", (_req, res) => {
+    res.set("Cache-Control", "no-cache").sendFile(path.join(PUBLIC_DIR, "thank-you.html"));
+  });
+  app.get("/", (req, res, next) => {
+    if (req.query.payment !== "success") return next();
+    const { payment, ...rest } = req.query;
+    const qs = new URLSearchParams(rest).toString();
+    res.redirect(302, "/thank-you" + (qs ? "?" + qs : ""));
+  });
 
   app.use(express.static(PUBLIC_DIR, {
     setHeaders(res, file) {
