@@ -255,6 +255,8 @@ PLANS = [
 PKG_CHOICES = [["essential", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
 LINE_TAG_ID = "34e8f29d-a401-4dcc-b551-e49132bbd5d4"
 TIER_PRICES = {"essential": 3990, "vip": 9990, "coaching": 250000}  # baht, for ad-platform event values
+GOOGLE_ADS_ID = "AW-18496929738"
+GOOGLE_BEGIN_CHECKOUT_LABEL = ""  # Begin checkout (Secondary) label: empty = event not sent
 J = lambda o: json.dumps(o, ensure_ascii=False)
 js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("div",{className:"yt-plans",children:' + J(PLANS) + '.map(p=>m.jsxs("div",{className:"yt-plan",children:['
@@ -280,6 +282,9 @@ js = js[:_i] + js[_j + 1:]
 # beacon has time to leave the page.
 js = sub_exact(js, 'u.preventDefault(),o(!0);',
                'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);'
+               # Google Ads Begin checkout (Secondary, observation only), once its label is set above.
+               + ('window.gtag&&window.gtag("event","conversion",{send_to:"' + GOOGLE_ADS_ID + '/' + GOOGLE_BEGIN_CHECKOUT_LABEL
+                  + '",value:' + J(TIER_PRICES) + '[t.pkg],currency:"THB"});' if GOOGLE_BEGIN_CHECKOUT_LABEL else '') +
                # TikTok: identify the buyer by SHA-256 of their email (hashed in the browser, never sent
                # in plain text), make sure the funnel has AddToCart, then InitiateCheckout with tier + price.
                # (The thank-you page and the server's Events API send the Purchase.)
@@ -477,7 +482,19 @@ TIKTOK_VIEW_CONTENT = """<script>
   ttq.track('ViewContent', { contents: [{ content_id: '5wan-challenge', content_type: 'product' }], value: 3990, currency: 'THB' });
 </script>
 """
-html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE + TIKTOK_PIXEL_BASE + TIKTOK_VIEW_CONTENT, 1)
+# Google tag: on the landing page so the ad click (gclid) is stored when visitors arrive;
+# the Purchase conversion itself fires on /thank-you after the server confirms payment.
+GOOGLE_TAG_BASE = """<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '%s');
+</script>
+<!-- End Google tag -->
+""" % (GOOGLE_ADS_ID, GOOGLE_ADS_ID)
+html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE + TIKTOK_PIXEL_BASE + TIKTOK_VIEW_CONTENT + GOOGLE_TAG_BASE, 1)
 html = sub_exact(html, "/assets/index-DQqFpzXo.js", "/assets/index-th.js", 1)
 html = sub_exact(html, "/assets/index-K9wBeB5c.css", "/assets/index-th.css", 1)
 (OUT / "index.html").write_text(html)

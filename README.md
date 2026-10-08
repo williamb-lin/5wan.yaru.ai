@@ -73,4 +73,5 @@ and commit the updated `public/` files.
 - **TikTok Events API** (server): with `TIKTOK_ACCESS_TOKEN` set, every paid order is reported as CompletePayment with hashed email + phone, `event_id` = order number (deduplicated with the browser event). Optional `TIKTOK_TEST_EVENT_CODE` routes these to TikTok's Test events.
 - Consent line under the pay button links https://yaru.ai/privacy (PDPA).
 - The LINE Tag base code is on `/thank-you` too.
-- No Google, Meta or ActiveCampaign tracking yet (the English site's were removed so the Thai test doesn't mix with English data).
+- **Google Ads** (`AW-18496929738`): Google tag on both pages (the landing page stores the ad click). **Purchase** (label `GqwmCIbK4pIdEMr_gvRE`) fires on `/thank-you` only after the server confirms the order is paid: the page polls `/api/order-status?order=…` (which checks Beam directly if the webhook hasn't arrived yet), then sends the amount actually charged in THB with `transaction_id` = order number. ฿20 test orders are not sent to Google. **Begin checkout** (Secondary) is wired in `build_th.py` → `GOOGLE_BEGIN_CHECKOUT_LABEL`; empty = not sent. Set the label and rebuild to turn it on.
+- No Meta or ActiveCampaign tracking (the English site's were removed so the Thai test doesn't mix with English data).

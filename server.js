@@ -174,6 +174,10 @@ function createStore() {
         const r = await pool.query("SELECT * FROM orders WHERE payment_link_id = $1", [linkId]);
         return r.rows[0] || null;
       },
+      async byRef(ref) {
+        const r = await pool.query("SELECT * FROM orders WHERE ref = $1", [ref]);
+        return r.rows[0] || null;
+      },
       async list() {
         const r = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
         return r.rows;
@@ -202,6 +206,9 @@ function createStore() {
     },
     async byLink(linkId) {
       return read().find((r) => r.payment_link_id === linkId) || null;
+    },
+    async byRef(ref) {
+      return read().find((r) => r.ref === ref) || null;
     },
     async list() {
       return read().reverse();
@@ -439,6 +446,30 @@ async function main() {
       console.error(`[checkout] order ${ref} failed:`, err.message);
       await store.update(ref, { status: "error" }).catch(() => {});
       res.status(502).json({ message: "Could not start payment" });
+    }
+  });
+
+  // Payment status for the confirmation page, so ad purchase tags fire only for orders the
+  // server has confirmed paid (webhook, or a direct check with Beam here). Returns no buyer
+  // details: just status, package and the amount actually charged.
+  const statusChecks = new Map();
+  app.get("/api/order-status", async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const ref = clip(req.query.order, 20);
+    if (!/^5W-[0-9A-F]{10}$/.test(ref)) return res.status(400).json({ message: "Invalid order" });
+    try {
+      const order = await store.byRef(ref);
+      if (!order) return res.status(404).json({ message: "Not found" });
+      // The redirect can beat the webhook: ask Beam directly, at most every 5 s per order.
+      if (order.status === "pending" && Date.now() - (statusChecks.get(ref) || 0) > 5000) {
+        statusChecks.set(ref, Date.now());
+        if (statusChecks.size > 5000) statusChecks.clear();
+        await refreshFromBeam(store, order).catch((e) => console.warn("[status] refresh", ref, e.message));
+      }
+      res.json({ status: order.status, package: order.package, value: Number(order.amount) / 100, currency: order.currency || "THB", test: isTestOrder(order) });
+    } catch (err) {
+      console.error("[status]", ref, err.message);
+      res.status(500).json({ message: "error" });
     }
   });
 
