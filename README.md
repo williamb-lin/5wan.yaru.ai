@@ -69,5 +69,8 @@ and commit the updated `public/` files.
 
 - **LINE Tag** (`34e8f29d-a401-4dcc-b551-e49132bbd5d4`): base code in `<head>` sends a page view on every visit; a **Conversion** (`_lt('send','cv',{type:'Conversion'})`) fires when someone clicks the pay button. Both are added in `build_th.py`.
 - **TikTok Pixel** (`DB3I03JC77U04C8M6HN0`): base code in `<head>` of both pages (PageView); **InitiateCheckout** (tier + price, THB) on the pay button; **CompletePayment** (value per tier, `event_id` = order number) on `/thank-you`. ฿20 test orders return with `&test=1` and are reported with their real value of ฿20.
+- TikTok funnel also includes **ViewContent** (page load) and **AddToCart** (package picked, or on buy if none picked); on the buy click the email is SHA-256-hashed in the browser and passed via `ttq.identify`.
+- **TikTok Events API** (server): with `TIKTOK_ACCESS_TOKEN` set, every paid order is reported as CompletePayment with hashed email + phone, `event_id` = order number (deduplicated with the browser event). Optional `TIKTOK_TEST_EVENT_CODE` routes these to TikTok's Test events.
+- Consent line under the pay button links https://yaru.ai/privacy (PDPA).
 - The LINE Tag base code is on `/thank-you` too.
 - No Google, Meta or ActiveCampaign tracking yet (the English site's were removed so the Thai test doesn't mix with English data).

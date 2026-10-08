@@ -10,6 +10,9 @@
 //   BEAM_WEBHOOK_HMAC_KEY   Beam Lighthouse → Developers → Webhooks → your webhook's HMAC key
 //   BEAM_ENV                "playground" (test money, default) or "production" (real money)
 //   PUBLIC_BASE_URL         optional, e.g. https://5wan.yaru.ai — where Beam sends buyers back
+//   TIKTOK_ACCESS_TOKEN     optional: TikTok Events API token (Events Manager → pixel → Generate access token);
+//                           when set, each paid order is reported to TikTok as a Purchase from the server
+//   TIKTOK_TEST_EVENT_CODE  optional: send Events API calls to TikTok's "Test events" instead of live data
 //   TEST_CHECKOUT_CODE      optional: visiting /?test=<code> makes any tier a real ฿20 charge,
 //                           for end-to-end testing; such orders are marked TEST in /admin
 //   PORT                    optional, defaults to 3000
@@ -55,6 +58,62 @@ BEAM.api =
   process.env.BEAM_API_BASE || // local testing against a mock only
   (BEAM.env === "production" ? "https://api.beamcheckout.com" : "https://playground.api.beamcheckout.com");
 BEAM.ready = Boolean(BEAM.merchantId && BEAM.apiKey);
+
+// TikTok Events API: the server reports each paid order as CompletePayment ("Purchase") with
+// SHA-256-hashed email and phone. event_id = order number, the same as the browser event on
+// /thank-you, so TikTok counts the purchase once.
+const TIKTOK = {
+  token: process.env.TIKTOK_ACCESS_TOKEN || "",
+  pixel: "DB3I03JC77U04C8M6HN0",
+  testCode: process.env.TIKTOK_TEST_EVENT_CODE || "",
+  api: process.env.TIKTOK_API_BASE || "https://business-api.tiktok.com", // override for local testing only
+};
+const sha256 = (v) => crypto.createHash("sha256").update(v).digest("hex");
+const toE164 = (p) => {
+  const d = String(p || "").replace(/[^\d+]/g, "");
+  if (!d) return "";
+  if (d.startsWith("+")) return d;
+  if (d.startsWith("66")) return "+" + d;
+  return d.startsWith("0") ? "+66" + d.slice(1) : "+66" + d;
+};
+async function reportPurchaseToTikTok(order, phone) {
+  if (!TIKTOK.token) return;
+  const email = String(order.email || "").trim().toLowerCase();
+  const tel = toE164(phone || order.phone);
+  const user = {};
+  if (email) user.email = sha256(email);
+  if (tel) user.phone = sha256(tel);
+  const body = {
+    event_source: "web",
+    event_source_id: TIKTOK.pixel,
+    ...(TIKTOK.testCode ? { test_event_code: TIKTOK.testCode } : {}),
+    data: [{
+      event: "CompletePayment",
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: order.ref,
+      user,
+      properties: {
+        currency: "THB",
+        value: Number(order.amount) / 100,
+        contents: [{ content_id: order.package, content_type: "product", quantity: 1 }],
+      },
+      page: { url: `${(process.env.PUBLIC_BASE_URL || "https://5wan.yaru.ai").replace(/\/+$/, "")}/thank-you` },
+    }],
+  };
+  try {
+    const res = await fetch(`${TIKTOK.api}/open_api/v1.3/event/track/`, {
+      method: "POST",
+      headers: { "Access-Token": TIKTOK.token, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.code === 0) console.log(`[tiktok] purchase ${order.ref} reported${TIKTOK.testCode ? " (test events)" : ""}`);
+    else console.warn(`[tiktok] purchase ${order.ref} not accepted: ${res.status} ${data.code} ${data.message || ""}`);
+  } catch (err) {
+    console.warn(`[tiktok] purchase ${order.ref} failed: ${err.message}`);
+  }
+}
 
 // Beam payment-link statuses -> our order status.
 const LINK_STATUS = { ACTIVE: "pending", PAID: "paid", EXPIRED: "expired", DISABLED: "cancelled", VOIDED: "refunded", REFUNDED: "refunded" };
@@ -191,6 +250,7 @@ async function refreshFromBeam(store, order) {
     const fields = { status, ...(status === "paid" && !order.paid_at ? { paid_at: new Date().toISOString() } : {}) };
     await store.update(order.ref, fields);
     Object.assign(order, fields);
+    if (status === "paid") reportPurchaseToTikTok(order);
   }
 }
 
@@ -266,6 +326,7 @@ async function main() {
         if (order && order.status !== "paid") {
           await store.update(order.ref, { status: "paid", paid_at: new Date().toISOString() });
           console.log(`[beam] order ${order.ref} paid (${order.package})`);
+          reportPurchaseToTikTok(order);
         }
       } else if (type === "charge.succeeded" && event.source !== "PAYMENT_LINK") {
         // Store-link payment: no order ref, so match the newest unpaid store-link order
@@ -299,6 +360,7 @@ async function main() {
           };
           if (order.status !== "paid") Object.assign(fields, { status: "paid", paid_at: event.transactionTime || new Date().toISOString() });
           await store.update(order.ref, fields);
+          reportPurchaseToTikTok(order, fields.phone); // same event_id as above: TikTok keeps one
         }
       }
       res.status(200).send("ok");
@@ -434,7 +496,7 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
   });
 
   app.get("/healthz", (_req, res) =>
-    res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "store-links", webhook: Boolean(BEAM.hmacKey) })
+    res.json({ ok: true, storage: store.kind, beam: BEAM.ready ? BEAM.env : "store-links", webhook: Boolean(BEAM.hmacKey), tiktokEventsApi: Boolean(TIKTOK.token) })
   );
 
   // The confirmation page is its own standalone file (public/thank-you.html), not part of

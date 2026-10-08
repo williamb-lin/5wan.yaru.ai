@@ -137,7 +137,7 @@ T = {
     "Your email address": "อีเมลของคุณ",
     "Signing you up...": "กำลังไปหน้าชำระเงิน...",
     "Start the Free Challenge": "ซื้อคอร์สและชำระเงิน",
-    "No spam. No credit card. Unsubscribe any time.": "ชำระเงินอย่างปลอดภัยผ่าน Beam · ไม่มีสแปม",
+    "No spam. No credit card. Unsubscribe any time.": "__CONSENT__",
     "Something went wrong": "เกิดข้อผิดพลาด",
     "There was an issue signing you up. Please try again.": "ไม่สามารถไปหน้าชำระเงินได้ กรุณาลองใหม่อีกครั้ง",
     # 404
@@ -280,9 +280,14 @@ js = js[:_i] + js[_j + 1:]
 # beacon has time to leave the page.
 js = sub_exact(js, 'u.preventDefault(),o(!0);',
                'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);'
-               # TikTok: InitiateCheckout with the tier and its price (thank-you page sends CompletePayment)
-               'window.ttq&&window.ttq.track("InitiateCheckout",{contents:[{content_id:t.pkg,content_type:"product",quantity:1}],value:'
-               + J(TIER_PRICES) + '[t.pkg],currency:"THB"});', 1)
+               # TikTok: identify the buyer by SHA-256 of their email (hashed in the browser, never sent
+               # in plain text), make sure the funnel has AddToCart, then InitiateCheckout with tier + price.
+               # (The thank-you page and the server's Events API send the Purchase.)
+               'window.ttq&&(async()=>{const P=' + J(TIER_PRICES) + ',c=[{content_id:t.pkg,content_type:"product",quantity:1}];'
+               'try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t.email.trim().toLowerCase()));'
+               'window.ttq.identify({email:[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")})}catch(_){}'
+               'window.__ytAtc||window.ttq.track("AddToCart",{contents:c,value:P[t.pkg],currency:"THB"});'
+               'window.ttq.track("InitiateCheckout",{contents:c,value:P[t.pkg],currency:"THB"})})();', 1)
 # On success the server returns Beam's payment-link URL: send the buyer there (no toast).
 # After paying, Beam sends them to the separate /thank-you page.
 js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
@@ -292,7 +297,7 @@ js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'bod
 js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกแพ็กเกจที่สนใจ") + '}),'
     'm.jsx("div",{className:"yt-pkgs",role:"radiogroup",children:' + J(PKG_CHOICES) + '.map(([k,l,d])=>m.jsxs("label",{className:"yt-pkg"+(t.pkg===k?" yt-pkg-on":""),children:['
-    'm.jsx("input",{type:"radio",name:"pkg",value:k,checked:t.pkg===k,onChange:()=>a("pkg",k),className:"sr-only"}),'
+    'm.jsx("input",{type:"radio",name:"pkg",value:k,checked:t.pkg===k,onChange:()=>{a("pkg",k);window.__ytAtc=1;window.ttq&&window.ttq.track("AddToCart",{contents:[{content_id:k,content_type:"product",quantity:1}],value:' + J(TIER_PRICES) + '[k],currency:"THB"})},className:"sr-only"}),'
     'm.jsx("span",{className:"yt-pkg-name",children:l}),m.jsx("span",{className:"yt-pkg-desc yt-thin",children:d})]},k))})]}),'
     'm.jsx(mn,{type:"submit"', 1)
 
@@ -393,6 +398,12 @@ TH_CSS = """.font-medium,.font-semibold{font-weight:400}
 """
 css = FONT_CSS + css + TH_CSS
 
+# PDPA consent line under the pay button, linking Yaru's privacy policy.
+js = sub_exact(js, '"__CONSENT__"',
+    '[' + J("ชำระเงินอย่างปลอดภัยผ่าน Beam · เมื่อกดซื้อ ถือว่าคุณยอมรับ") + ','
+    'm.jsx("a",{href:"https://yaru.ai/privacy",target:"_blank",rel:"noopener noreferrer",style:{textDecoration:"underline"},children:'
+    + J("นโยบายความเป็นส่วนตัว") + '}),' + J(" และการใช้ข้อมูลเพื่อวัดผลโฆษณา (LINE, TikTok, Google)") + ']', 1)
+
 (OUT / "assets/index-th.js").write_text(js)
 (OUT / "assets/index-th.css").write_text(css)
 
@@ -461,7 +472,12 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 </script>
 <!-- TikTok Pixel Code End -->
 """
-html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE + TIKTOK_PIXEL_BASE, 1)
+TIKTOK_VIEW_CONTENT = """<script>
+  // TikTok funnel: someone viewed the course page.
+  ttq.track('ViewContent', { contents: [{ content_id: '5wan-challenge', content_type: 'product' }], value: 3990, currency: 'THB' });
+</script>
+"""
+html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE + TIKTOK_PIXEL_BASE + TIKTOK_VIEW_CONTENT, 1)
 html = sub_exact(html, "/assets/index-DQqFpzXo.js", "/assets/index-th.js", 1)
 html = sub_exact(html, "/assets/index-K9wBeB5c.css", "/assets/index-th.css", 1)
 (OUT / "index.html").write_text(html)
