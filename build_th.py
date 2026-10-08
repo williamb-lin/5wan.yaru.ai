@@ -256,7 +256,7 @@ PKG_CHOICES = [["essential", "พื้นฐาน", "฿3,990"], ["vip", "VIP"
 LINE_TAG_ID = "34e8f29d-a401-4dcc-b551-e49132bbd5d4"
 TIER_PRICES = {"essential": 3990, "vip": 9990, "coaching": 250000}  # baht, for ad-platform event values
 GOOGLE_ADS_ID = "AW-18496929738"
-GOOGLE_BEGIN_CHECKOUT_LABEL = ""  # Begin checkout (Secondary) label: empty = event not sent
+GOOGLE_BEGIN_CHECKOUT_LABEL = "2tSVCLv2mpUdEMr_gvRE"  # Begin checkout (Secondary, count One); empty = event not sent
 J = lambda o: json.dumps(o, ensure_ascii=False)
 js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("div",{className:"yt-plans",children:' + J(PLANS) + '.map(p=>m.jsxs("div",{className:"yt-plan",children:['
