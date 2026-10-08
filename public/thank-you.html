@@ -39,15 +39,16 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 <!-- TikTok Pixel Code End -->
 <script>
   // Purchase event for TikTok. Value comes from the tier in the URL; event_id = order number
-  // so a refresh isn't counted twice. Test orders (?test=1, real ฿20 payments) are not reported.
+  // so a refresh isn't counted twice. Test orders (?test=1) are real ฿20 payments and are
+  // reported with their real value of 20.
   (function () {
     var q = new URLSearchParams(location.search);
     var prices = { essential: 3990, vip: 9990, coaching: 250000 };
     var tier = q.get("tier"), order = q.get("order");
-    if (!prices[tier] || q.get("test") === "1") return;
+    if (!prices[tier]) return;
     ttq.track("CompletePayment", {
       contents: [{ content_id: tier, content_type: "product", quantity: 1 }],
-      value: prices[tier], currency: "THB"
+      value: q.get("test") === "1" ? 20 : prices[tier], currency: "THB"
     }, { event_id: order || undefined });
   })();
 </script>

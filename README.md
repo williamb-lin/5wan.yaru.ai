@@ -68,6 +68,6 @@ and commit the updated `public/` files.
 ## Tracking scripts on the page
 
 - **LINE Tag** (`34e8f29d-a401-4dcc-b551-e49132bbd5d4`): base code in `<head>` sends a page view on every visit; a **Conversion** (`_lt('send','cv',{type:'Conversion'})`) fires when someone clicks the pay button. Both are added in `build_th.py`.
-- **TikTok Pixel** (`DB3I03JC77U04C8M6HN0`): base code in `<head>` of both pages (PageView); **InitiateCheckout** (tier + price, THB) on the pay button; **CompletePayment** (value per tier, `event_id` = order number) on `/thank-you`. ฿20 test orders return with `&test=1` and send no CompletePayment.
+- **TikTok Pixel** (`DB3I03JC77U04C8M6HN0`): base code in `<head>` of both pages (PageView); **InitiateCheckout** (tier + price, THB) on the pay button; **CompletePayment** (value per tier, `event_id` = order number) on `/thank-you`. ฿20 test orders return with `&test=1` and are reported with their real value of ฿20.
 - The LINE Tag base code is on `/thank-you` too.
 - No Google, Meta or ActiveCampaign tracking yet (the English site's were removed so the Thai test doesn't mix with English data).
