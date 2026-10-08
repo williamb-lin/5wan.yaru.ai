@@ -66,7 +66,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
   // or the server checking Beam directly), with the amount actually charged and the order
   // number as transaction_id so a reload or second visit isn't counted twice. Polls for up to
   // ~2 minutes because the buyer can arrive here a moment before Beam's webhook.
-  // ฿20 test orders are not sent to Google.
+  // ฿20 test orders are sent too, with their real value of 20, so Purchase can be checked in Tag Assistant.
   (function () {
     var order = new URLSearchParams(location.search).get("order");
     if (!order || !/^5W-[0-9A-F]{10}$/.test(order)) return;
@@ -77,7 +77,6 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (o) {
           if (o && o.status === "paid") {
-            if (o.test) return;
             gtag("event", "conversion", {
               send_to: "AW-18496929738/GqwmCIbK4pIdEMr_gvRE",
               value: o.value, currency: o.currency || "THB", transaction_id: order
