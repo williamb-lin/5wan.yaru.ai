@@ -50,7 +50,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
          The URL only says which order to look up: what's shown, and whether purchase tracking
          fires, comes from the server's /api/order-status answer. -->
     <meta name="robots" content="noindex" />
-    <title>สถานะการชำระเงิน · Yaru ชาเลนจ์ 5 วัน</title>
+    <title>สถานะการชำระเงิน · Yaru คอร์ส 1 วัน</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <style>
@@ -139,7 +139,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     var STATES = {
       checking: { icon: "clock", title: "กำลังตรวจสอบการชำระเงิน", body: "กรุณารอสักครู่ เรากำลังยืนยันการชำระเงินของคุณกับ Beam" },
       pending: { icon: "clock", title: "รอการยืนยันการชำระเงิน", body: "เรายังไม่ได้รับการยืนยันการชำระเงินจาก Beam ซึ่งบางครั้งอาจใช้เวลาสักครู่ ถ้าคุณชำระเงินแล้ว ไม่ต้องชำระซ้ำ หน้านี้จะตรวจสอบให้อัตโนมัติ หรือกดตรวจสอบอีกครั้งได้", retry: true },
-      paid: { icon: "check", title: "ชำระเงินเรียบร้อย ยินดีต้อนรับ!", body: "ขอบคุณที่ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว", note: "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย", receipt: true },
+      paid: { icon: "check", title: "ชำระเงินเรียบร้อย ยินดีต้อนรับ!", body: "ขอบคุณที่ซื้อคอร์ส 1 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว", note: "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย", receipt: true },
       expired: { icon: "alert", title: "ลิงก์ชำระเงินหมดอายุ", body: "คำสั่งซื้อนี้ยังไม่ได้รับการชำระเงิน และลิงก์ชำระเงินหมดอายุแล้ว กรุณาเลือกแพ็กเกจและเริ่มชำระเงินใหม่อีกครั้ง", note: NOT_PAID, restart: true },
       cancelled: { icon: "alert", title: "คำสั่งซื้อถูกยกเลิก", body: "คำสั่งซื้อนี้ถูกยกเลิกและยังไม่ได้รับการชำระเงิน กรุณาเลือกแพ็กเกจและเริ่มใหม่อีกครั้ง", note: NOT_PAID, restart: true },
       refunded: { icon: "alert", title: "คำสั่งซื้อนี้ได้รับการคืนเงินแล้ว", body: "การชำระเงินของคำสั่งซื้อนี้ถูกคืนเงินแล้ว ถ้ามีคำถาม กรุณาติดต่อทีม Yaru พร้อมหมายเลขคำสั่งซื้อ", restart: true },

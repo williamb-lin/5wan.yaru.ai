@@ -22,17 +22,17 @@ T = {
     "Loading Yaru Create...": "กำลังโหลด Yaru Create...",
     "Join Free": "ซื้อคอร์ส",
     # Hero
-    "FREE 5-Day Challenge": "ชาเลนจ์ 5 วัน · ราคาพิเศษช่วงเปิดตัว",
-    "Launch a product idea in 5 days with AI.": "นำไอเดียของคุณออกมาหารายได้ภายใน 5 วัน ด้วย AI",
+    "FREE 5-Day Challenge": "คอร์ส 1 วัน · ราคาพิเศษช่วงเปิดตัว",
+    "Launch a product idea in 5 days with AI.": "นำไอเดียของคุณออกมาหารายได้ด้วย AI ในหนึ่งวัน",
     "No code. No experience. No excuses. Pick your idea, start building, and get it in front of real people. In a week, for free.":
-        "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์",
+        "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายในวันเดียว",
     "Join the Free Challenge": "ซื้อคอร์สราคาพิเศษ",
     "See What's Inside": "ดูว่ามีอะไรบ้าง",
     # Tools strip
     "Build with the world's leading AI tools": "สร้างด้วยเครื่องมือ AI ชั้นนำของโลก",
     # What you'll walk away with
     "What You'll Walk Away With": "สิ่งที่คุณจะได้รับ",
-    "Five days. One idea. Launch a product idea.": "ห้าวันกับหนึ่งไอเดีย เปิดตัวไอเดียของคุณสู่ตลาด",
+    "Five days. One idea. Launch a product idea.": "หนึ่งวันกับหนึ่งไอเดีย เปิดตัวไอเดียของคุณสู่ตลาด",
     "A real business idea. Chosen.": "ไอเดียธุรกิจที่คัดเลือกมาให้คุณเลือกแล้ว (หรือใช้ไอเดียของตัวเองได้)",
     "Browse 100+ vetted AI business ideas or use our AI generator to find one that genuinely excites you. No more overthinking. One idea. One direction.":
         "เลือกดูไอเดียธุรกิจ AI ที่คัดสรรแล้วกว่า 100 ไอเดีย หรือใช้ตัวช่วยสร้างไอเดียด้วย AI ของเรา เพื่อหาไอเดียที่คุณตื่นเต้นจริงๆ เลิกคิดมาก หนึ่งไอเดีย หนึ่งทิศทาง",
@@ -44,46 +44,46 @@ T = {
         "คุณจะได้นำไอเดียไปให้กลุ่มเป้าหมายเห็น และเก็บสัญญาณตอบรับจริง เพื่อพิสูจน์ว่ามีคนอื่นนอกจากคุณที่เชื่อในไอเดียนี้",
     "A clear path forward.": "วางแผนการตลาดและเส้นทางต่อไป",
     "After five days you'll know exactly what it takes to go from challenge to full launch, and whether Yaru Create is your next step.":
-        "หลังจากห้าวัน คุณจะรู้ชัดว่าต้องทำอะไรบ้างเพื่อไปจากชาเลนจ์สู่การเปิดตัวเต็มรูปแบบ และ Yaru Create ใช่ก้าวต่อไปของคุณหรือไม่",
+        "หลังจบคอร์ส คุณจะรู้ชัดว่าต้องทำอะไรบ้างเพื่อไปสู่การเปิดตัวเต็มรูปแบบ และ Yaru Create ใช่ก้าวต่อไปของคุณหรือไม่",
     # Why most people never start
     "Why Most People Never Start": "ทำไมคนส่วนใหญ่ไม่เคยได้เริ่ม",
     "The problem isn't motivation.": "ปัญหาไม่ใช่แรงจูงใจ",
     "It's the first step.": "แต่คือก้าวแรก",
     "Here's what stops people before they even begin, and how the 5-Day Challenge solves each one.":
-        "โดยรวมแล้วนี่คือสิ่งที่ทำให้หลายคนหยุดก่อนที่จะเริ่มต้นได้ด้วยซ้ำ และนี่คือวิธีที่ชาเลนจ์ 5 วันของเราช่วยให้คุณแก้ไขปัญหานี้ได้",
+        "โดยรวมแล้วนี่คือสิ่งที่ทำให้หลายคนหยุดก่อนที่จะเริ่มต้นได้ด้วยซ้ำ และนี่คือวิธีที่คอร์ส 1 วันของเราช่วยให้คุณแก้ไขปัญหานี้ได้",
     "Too many ideas. None of them feel right.": "ไอเดียเยอะไปหมดเลย แต่ไม่มีอันไหนที่รู้สึกว่าใช่",
     "SaaS for dog walkers. Productivity apps for remote teams. AI chatbots for restaurants. Complexity of choice causes paralysis. Overwhelm causes inaction.":
         "SaaS สำหรับคนรับพาสุนัขเดินเล่น แอปเพิ่มประสิทธิภาพสำหรับทีมที่ทำงานทางไกล แชตบอต AI สำหรับร้านอาหาร ตัวเลือกที่มากเกินไปทำให้ตัดสินใจไม่ได้ ความรู้สึกท่วมท้นทำให้ไม่ได้ลงมือทำ",
     "You research instead of build.": "ขอหาข้อมูลก่อนนะ แทนที่จะลงมือสร้างเลย และหาความรู้โดยการกระทำ",
     "Weeks pass. Nothing ships. The gap between thinking and doing keeps growing.":
         "หลายสัปดาห์ผ่านไป ยังไม่มีอะไรออกมา ช่องว่างระหว่างการคิดกับการลงมือทำก็ยิ่งห่างออกไป",
-    "Day 1 fixes this.": "เราช่วยคุณแก้ไขปัญหาอันนี้ได้ตั้งแต่วันที่ 1 แล้ว",
+    "Day 1 fixes this.": "เราช่วยคุณแก้ปัญหานี้ได้ตั้งแต่หัวข้อแรก",
     "One idea. Chosen. Done. We give you the tools to pick and commit in hours, not weeks.":
         "หนึ่งไอเดีย เลือกแล้ว จบ เราให้เครื่องมือที่ช่วยให้คุณเลือกและตัดสินใจได้ในไม่กี่ชั่วโมง ไม่ใช่หลายสัปดาห์",
     "Joshua Maddox, CEO Yaru": "Will Lin, COO ของ Yaru",
     # Who it's for
-    "This Challenge Was Built for You. If...": "ชาเลนจ์นี้สร้างมาเพื่อคุณ ถ้า...",
+    "This Challenge Was Built for You. If...": "คอร์สนี้สร้างมาเพื่อคุณ ถ้า...",
     "You've been thinking about building something for months. But haven't started.":
         "ถ้าคุณเคยคิดอยากจะสร้างอะไรสักอย่างมาสักพักแล้ว และยังไม่เคยได้เริ่ม",
     "The challenge gives you a deadline, a structure, and a community. You won't have a choice but to start.":
-        "ชาเลนจ์นี้ให้ทั้งเส้นตาย โครงสร้าง และคอมมูนิตี้ คุณจะไม่มีทางเลือกอื่นนอกจากต้องเริ่ม",
+        "คอร์สนี้ให้ทั้งโครงสร้าง ขั้นตอนที่ชัดเจน และคอมมูนิตี้ คุณจะได้เริ่มลงมือทันทีภายในวันเดียว",
     "You have no idea how to code. And you don't need to.": "ถ้าคุณไม่มีความรู้เกี่ยวกับการทำเว็บไซต์ โดยเฉพาะการเขียนโค้ด",
     "Every tool we use in this challenge requires zero coding. If you can type, you can build.":
-        "ทุกเครื่องมือที่เราใช้ในชาเลนจ์นี้ไม่ต้องเขียนโค้ดเลย ถ้าคุณพิมพ์ได้ คุณก็สร้างได้",
+        "ทุกเครื่องมือที่เราใช้ในคอร์สนี้ไม่ต้องเขียนโค้ดเลย ถ้าคุณพิมพ์ได้ คุณก็สร้างได้",
     "You're not sure what to build yet.": "คุณยังไม่แน่ใจว่าอยากจะสร้างอะไรให้ตัวเอง",
     "Day 1 is literally about finding your idea. We have 100+ vetted options and an AI interview tool to help you choose.":
-        "วันที่ 1 คือการหาไอเดียของคุณโดยเฉพาะ เรามีตัวเลือกที่คัดสรรแล้วกว่า 100 ไอเดีย และเครื่องมือสัมภาษณ์ด้วย AI ที่ช่วยให้คุณเลือกได้",
+        "หัวข้อแรกของคอร์สคือการหาไอเดียของคุณโดยเฉพาะ เรามีตัวเลือกที่คัดสรรแล้วกว่า 100 ไอเดีย และเครื่องมือสัมภาษณ์ด้วย AI ที่ช่วยให้คุณเลือกได้",
     "You want to see what's actually possible before you commit to anything bigger.":
         "ถ้าคุณอยากเห็นด้วยตัวเองว่าอะไรเป็นไปได้จริง ก่อนที่จะลงทุนแรงและเวลาของตัวเองเต็มที่",
     "Five days is the perfect test run. Launch a real idea, validate it with real people, then decide your next move.":
-        "ห้าวันคือการทดลองที่สมบูรณ์แบบ เปิดตัวไอเดียจริง พิสูจน์กับคนจริง แล้วค่อยตัดสินใจก้าวต่อไป",
+        "หนึ่งวันคือการทดลองที่สมบูรณ์แบบ เปิดตัวไอเดียจริง พิสูจน์กับคนจริง แล้วค่อยตัดสินใจก้าวต่อไป",
     "You don't need experience. You don't need money. You don't need a plan. You just need to show up for five days.":
-        "คุณไม่ต้องมีประสบการณ์ ไม่ต้องมีเงินทุนก้อนใหญ่ ไม่ต้องมีแผน แค่มาให้ครบห้าวันก็พอ",
+        "คุณไม่ต้องมีประสบการณ์ ไม่ต้องมีเงินทุนก้อนใหญ่ ไม่ต้องมีแผน แค่ให้เวลากับเราหนึ่งวันก็พอ",
     # Day by day
-    "Day 1": "วันที่ 1", "Day 2": "วันที่ 2", "Day 3": "วันที่ 3", "Day 4": "วันที่ 4", "Day 5": "วันที่ 5",
+    "Day 1": "หัวข้อที่ 1", "Day 2": "หัวข้อที่ 2", "Day 3": "หัวข้อที่ 3", "Day 4": "หัวข้อที่ 4", "Day 5": "หัวข้อที่ 5",
     "The Idea.": "ไอเดีย",
     "Stop overthinking. Pick one idea you're excited about. That's the whole day.":
-        "เลิกคิดมาก เลือกไอเดียเดียวที่คุณตื่นเต้น แค่นั้นแหละคือทั้งวัน",
+        "เลิกคิดมาก เลือกไอเดียเดียวที่คุณตื่นเต้น แล้วเดินหน้าต่อ",
     "The Tools.": "เครื่องมือ",
     "The Yaru team walks you through the top no-code AI build tools. Pick one. Start building.":
         "ทีม Yaru จะพาคุณไปรู้จักเครื่องมือ AI แบบไม่ต้องเขียนโค้ดที่ดีที่สุด เลือกมาหนึ่งอย่าง แล้วเริ่มสร้าง",
@@ -95,10 +95,10 @@ T = {
         "นำไอเดียไปให้คนจริงได้เห็น รับสัญญาณตอบรับจริง แล้วดูว่าโดนใจหรือไม่",
     "Follow Through.": "ไปต่อให้สุด",
     "You've done more in five days than most do in months. Now find out what comes next.":
-        "ในห้าวัน คุณทำได้มากกว่าที่คนส่วนใหญ่ทำในหลายเดือน ทีนี้มาดูกันว่าก้าวต่อไปคืออะไร",
-    "The 5-Day Challenge: Day by Day": "แต่ละวันใน Challenge 5 วัน",
+        "ในวันเดียว คุณทำได้มากกว่าที่คนส่วนใหญ่ทำในหลายเดือน ทีนี้มาดูกันว่าก้าวต่อไปคืออะไร",
+    "The 5-Day Challenge: Day by Day": "สิ่งที่เราสอนในคอร์ส",
     "Every day has one clear goal and one clear outcome. No overwhelm. Just momentum.":
-        "ทุกวันมีเป้าหมายที่ชัดเจนหนึ่งอย่าง และผลลัพธ์ที่ชัดเจนหนึ่งอย่าง ไม่หนักเกินไป มีแต่แรงผลักดัน",
+        "ทุกหัวข้อมีเป้าหมายที่ชัดเจนหนึ่งอย่าง และผลลัพธ์ที่ชัดเจนหนึ่งอย่าง ไม่หนักเกินไป มีแต่แรงผลักดัน",
     # About
     "About Yaru": "เกี่ยวกับ Yaru",
     "Joshua Maddox and the Yaru team": "Will Lin ระหว่างเวิร์กช็อปของ Yaru",
@@ -106,7 +106,7 @@ T = {
     "Yaru builds real-world products and services using the latest AI tools, brings them to market, and documents exactly what's working and what isn't. Then we bring those lessons (the honest ones, not the hype) directly to you.":
         "Yaru สร้างผลิตภัณฑ์และบริการที่ใช้งานได้จริงด้วยเครื่องมือ AI ล่าสุด นำออกสู่ตลาด และบันทึกอย่างละเอียดว่าอะไรได้ผลและอะไรไม่ได้ผล จากนั้นเราก็นำบทเรียนเหล่านั้น (บทเรียนที่จริงใจ ไม่ใช่กระแส) มาถ่ายทอดให้คุณโดยตรง",
     "We tested Yaru ourselves before we launched it. We invited people to live learning sessions in multiple cities. They showed up. We repeated the test. There was clear signal. That's exactly the process we'll teach you in Day 3 of this challenge.":
-        "เราทดสอบ Yaru ด้วยตัวเองก่อนเปิดตัว เราเชิญผู้คนมาร่วมเซสชันการเรียนรู้สดในหลายเมือง พวกเขามากันจริง เราทดสอบซ้ำ และได้สัญญาณตอบรับที่ชัดเจน นี่คือกระบวนการเดียวกับที่เราจะสอนคุณในวันที่ 3 ของชาเลนจ์นี้",
+        "เราทดสอบ Yaru ด้วยตัวเองก่อนเปิดตัว เราเชิญผู้คนมาร่วมเซสชันการเรียนรู้สดในหลายเมือง พวกเขามากันจริง เราทดสอบซ้ำ และได้สัญญาณตอบรับที่ชัดเจน นี่คือกระบวนการเดียวกับที่เราจะสอนคุณในคอร์สนี้",
     "AI is simultaneously overhyped and underutilised. There are a lot of people online promising the world. We're not one of them. We show you what's actually working, through building, not talking.":
         "AI ถูกพูดถึงเกินจริง และในขณะเดียวกันก็ถูกใช้น้อยเกินไป มีคนมากมายบนโลกออนไลน์ที่สัญญาว่าจะให้ทุกอย่าง แต่เราไม่ใช่หนึ่งในนั้น เราแสดงให้คุณเห็นว่าอะไรได้ผลจริง ผ่านการลงมือสร้าง ไม่ใช่แค่พูด",
     "CEO, Yaru": "COO ของ Yaru",
@@ -116,13 +116,13 @@ T = {
     "The builders who share consistently are the ones who keep building.":
         "ขอแค่ว่าคุณเป็นคนที่พยายามอย่างสม่ำเสมอ นี่แหละคือคนที่จะสามารถก้าวต่อไปได้เรื่อยๆ กับ AI",
     "In five days you'll do more than most people do in months of thinking about it. AI is changing everything. Don't deal with it by watching from the sidelines.":
-        "ในห้าวัน คุณจะทำได้มากกว่าที่คนส่วนใหญ่ทำในหลายเดือนที่เอาแต่คิด AI กำลังเปลี่ยนทุกอย่าง อย่ารับมือกับมันด้วยการยืนดูอยู่ข้างสนาม",
-    "Join the Free 5-Day Challenge": "ซื้อคอร์สชาเลนจ์ 5 วัน",
+        "ในหนึ่งวัน คุณจะทำได้มากกว่าที่คนส่วนใหญ่ทำในหลายเดือนที่เอาแต่คิด AI กำลังเปลี่ยนทุกอย่าง อย่ารับมือกับมันด้วยการยืนดูอยู่ข้างสนาม",
+    "Join the Free 5-Day Challenge": "ซื้อคอร์ส 1 วัน",
     "No credit card. No experience required. Just show up for five days.":
-        "ไม่ต้องมีประสบการณ์ แค่มาให้ครบห้าวัน",
+        "ไม่ต้องมีประสบการณ์ แค่ให้เวลากับเราหนึ่งวัน",
     # Signup
     "100% free. No credit card required.": "ชำระเงินอย่างปลอดภัยผ่าน Beam",
-    "5 short daily emails with video walkthroughs": "อีเมลสั้นๆ วันละฉบับ 5 วัน พร้อมวิดีโอแนะนำทีละขั้นตอน",
+    "5 short daily emails with video walkthroughs": "เรียนจบในวันเดียว พร้อมการสอนทีละขั้นตอน",
     "Access to 100+ vetted AI business ideas": "เข้าถึงไอเดียธุรกิจ AI ที่คัดสรรแล้วกว่า 100 ไอเดีย",
     "AI tools to generate your idea and validate it fast": "เครื่องมือ AI ที่ช่วยสร้างไอเดียและพิสูจน์ไอเดียได้อย่างรวดเร็ว",
     "A private community of builders doing it alongside you": "คอมมูนิตี้ส่วนตัวของเหล่านักสร้างที่ลงมือทำไปพร้อมกับคุณ",
@@ -148,15 +148,15 @@ T = {
 # Template literals (backticks) — exact text inside the backticks.
 T_BACKTICK = {
     'Most people spend months "thinking about" starting something. You\'ll have a real idea launched and in front of real people before the week is out.':
-        'คนส่วนใหญ่ใช้เวลาหลายเดือนแค่ "คิดจะ" เริ่มทำอะไรสักอย่าง แต่คุณจะได้เปิดตัวไอเดียจริง และนำไปให้คนได้เห็นจริงก่อนสัปดาห์นี้จะจบ',
+        'คนส่วนใหญ่ใช้เวลาหลายเดือนแค่ "คิดจะ" เริ่มทำอะไรสักอย่าง แต่คุณจะได้เปิดตัวไอเดียจริง และนำไปให้คนได้เห็นจริงภายในวันเดียว',
     '"We see this a lot. Someone posts in a forum: \'I spent months building an AI startup and no one uses it.\' The mistake? They built first instead of validating first."':
         '"นับครั้งไม่ถ้วนแล้วที่ผมได้เจอคนที่เคยเอ่ยปากว่าอยากมีอะไรเป็นของตัวเอง หรืออยากเริ่มธุรกิจของตัวเอง แต่ไม่ยอมลงมือทำ"',
     '"You started this challenge five days ago. Today you have something live that real people can sign up for." That\'s what Day 5 looks like.':
-        '"คุณเริ่มชาเลนจ์นี้เมื่อห้าวันก่อน วันนี้คุณมีของที่ใช้งานได้จริง ให้คนจริงสมัครใช้ได้แล้ว" นี่คือหน้าตาของวันที่ 5',
+        '"เช้านี้คุณยังมีแค่ไอเดีย ตอนนี้คุณมีของที่ใช้งานได้จริง ให้คนจริงสมัครใช้ได้แล้ว" นี่คือสิ่งที่คุณจะได้เมื่อจบคอร์ส',
 }
 
 # Nav: keep English names (used for analytics ids), add Thai label for display.
-NAV = {"The Challenge": "ชาเลนจ์", "5 Days": "5 วัน", "Who It's For": "เหมาะกับใคร", "About Yaru": "เกี่ยวกับ Yaru"}
+NAV = {"The Challenge": "คอร์ส", "5 Days": "หัวข้อ", "Who It's For": "เหมาะกับใคร", "About Yaru": "เกี่ยวกับ Yaru"}
 
 # ---------------------------------------------------------------------------
 # Thai line-breaking fixes. Browsers split some loanwords mid-word (ไอ|เดีย),
@@ -197,10 +197,10 @@ def thai_fix(s):
         out.append(s[i:])
         s = "".join(out)
     s = re.sub(r"(\d+) (วัน|ไอเดีย|สัปดาห์)", r"\1" + MARK + r"\2", s)   # 5 วัน, 100 ไอเดีย, 1 สัปดาห์
-    s = re.sub(r"(วันที่) (\d)", r"\1" + MARK + r"\2", s)         # วันที่ 1
+    s = re.sub(r"(วันที่|หัวข้อที่) (\d)", r"\1" + MARK + r"\2", s)  # วันที่ 1, หัวข้อที่ 1
     return s
 
-KEEP = re.compile(r"(\d+\ue000(?:วัน|ไอเดีย|สัปดาห์)|วันที่\ue000\d)")
+KEEP = re.compile(r"(\d+\ue000(?:วัน|ไอเดีย|สัปดาห์)|(?:วันที่|หัวข้อที่)\ue000\d)")
 
 def js_lit(s):
     """Thai string -> JS expression. Kept-together pairs become nowrap spans."""
@@ -247,8 +247,8 @@ js = sub_exact(js, 'window.dataLayer=window.dataLayer||[],window.dataLayer.push(
 # Paid course: three packages. Shown as cards in the sign-up section and chosen on
 # the form (saved with the sign-up as "essential" / "vip" / "coaching").
 PLANS = [
-    {"name": "พื้นฐาน", "note": "คอร์สชาเลนจ์ 5 วัน", "was": "฿6,000", "price": "฿3,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
-    {"name": "VIP", "note": "คอร์สชาเลนจ์ 5 วัน แบบ VIP", "was": "฿12,990", "price": "฿9,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
+    {"name": "พื้นฐาน", "note": "คอร์ส 1 วัน", "was": "฿6,000", "price": "฿3,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
+    {"name": "VIP", "note": "คอร์ส 1 วัน แบบ VIP", "was": "฿12,990", "price": "฿9,990", "unit": "", "tag": "ราคาพิเศษช่วงเปิดตัว"},
     {"name": "โค้ชชิ่งแบบตัวต่อตัว", "note": "One-on-One Coaching", "was": "", "price": "฿250,000", "unit": "/ เดือน", "tag": ""},
 ]
 PKG_CHOICES = [["essential", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
@@ -423,9 +423,9 @@ js = sub_exact(js, '"__CONSENT__"',
 # 4. index.html
 # ---------------------------------------------------------------------------
 html = (SRC / "index.en.html").read_text()
-TITLE = "Yaru Create - ชาเลนจ์ 5 วัน: นำไอเดียของคุณออกมาหารายได้ด้วย AI"
-DESC = "ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru แล้วนำไอเดียของคุณออกมาหารายได้ภายใน 5 วันด้วย AI ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
-OG_DESC = "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายใน 1 สัปดาห์ ราคาพิเศษเริ่มต้น ฿3,990"
+TITLE = "Yaru Create: นำไอเดียของคุณออกมาหารายได้ด้วย AI ในหนึ่งวัน"
+DESC = "คอร์ส 1 วันกับ Yaru นำไอเดียของคุณออกมาหารายได้ด้วย AI ในหนึ่งวัน ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ราคาพิเศษเริ่มต้น ฿3,990"
+OG_DESC = "ไม่ต้องเขียนโค้ด ไม่ต้องมีประสบการณ์ ไม่มีข้ออ้าง เลือกไอเดีย ลงมือสร้าง แล้วนำไปให้คนได้เห็นจริง ภายในวันเดียว ราคาพิเศษเริ่มต้น ฿3,990"
 html = sub_exact(html, '<html lang="en">', '<html lang="th">', 1)
 html = sub_exact(html, "Yaru Create - Free 5-Day Challenge: Launch a Product Idea with AI", TITLE)
 html = sub_exact(html, "Join the free Yaru 5-Day Challenge and go from idea to launched product in one week. No code. No experience. Pick your idea, start building, and get it in front of real people. Free.", DESC, 1)
@@ -486,7 +486,7 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 """
 TIKTOK_VIEW_CONTENT = """<script>
   // TikTok funnel: someone viewed the course page.
-  ttq.track('ViewContent', { contents: [{ content_id: '5wan-challenge', content_type: 'product' }], value: 3990, currency: 'THB' });
+  ttq.track('ViewContent', { contents: [{ content_id: 'yaru-1day-course', content_type: 'product' }], value: 3990, currency: 'THB' });
 </script>
 """
 # Google tag: on the landing page so the ad click (gclid) is stored when visitors arrive;

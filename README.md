@@ -1,4 +1,4 @@
-# 5wan.yaru.ai — Yaru 5-Day Challenge (Thai)
+# 5wan.yaru.ai (moving to start.yaru.ai) — Yaru 1-day course (Thai)
 
 Thai version of [challenge.yaru.ai](https://challenge.yaru.ai), translated to Thai and set in Sukhumvit Set. Buyers pick a package (พื้นฐาน ฿3,990 · VIP ฿9,990 · 1:1 coaching ฿250,000/month), enter name and email, and pay on **Beam**'s hosted checkout. Orders are stored in Postgres and shown on `/admin`.
 

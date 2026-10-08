@@ -1,4 +1,4 @@
-// 5wan.yaru.ai — Thai 5-Day Challenge landing page with Beam checkout.
+// 5wan.yaru.ai (moving to start.yaru.ai) — Thai 1-day course landing page with Beam checkout.
 // Serves the static landing page from public/, turns a form submission into a Beam
 // payment link, records the order, and marks it paid when Beam confirms.
 //
@@ -34,9 +34,9 @@ const LOCAL_FILE = path.join(__dirname, "data", "orders.local.json");
 // the Beam API keys aren't set; with keys, a one-off payment link is created per order
 // instead (tracks each payment automatically and sends the buyer to /thank-you).
 const PACKAGES = {
-  essential: { label: "Essential", item: "ชาเลนจ์ 5 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
+  essential: { label: "Essential", item: "คอร์ส 1 วัน: แพ็กเกจพื้นฐาน", amount: 399000,
            storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/EssentialT1" },
-  vip: { label: "VIP", item: "ชาเลนจ์ 5 วัน: แพ็กเกจ VIP", amount: 999000,
+  vip: { label: "VIP", item: "คอร์ส 1 วัน: แพ็กเกจ VIP", amount: 999000,
          storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/VIPT1" },
   coaching: { label: "1:1 Coaching", item: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)", amount: 25000000,
               storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/1on1Coach" },
@@ -287,7 +287,7 @@ function checkAdmin(req, res, next) {
   const a = crypto.createHash("sha256").update(given).digest();
   const b = crypto.createHash("sha256").update(expected).digest();
   if (crypto.timingSafeEqual(a, b)) return next();
-  res.set("WWW-Authenticate", 'Basic realm="5wan admin", charset="UTF-8"').status(401).send("Login required");
+  res.set("WWW-Authenticate", 'Basic realm="Yaru 1-day course admin", charset="UTF-8"').status(401).send("Login required");
 }
 
 const esc = (v) =>
@@ -419,7 +419,7 @@ async function main() {
           order: {
             currency: "THB",
             netAmount: amount,
-            description: `Yaru 5-Day Challenge – ${pkg.label}${isTest ? " (TEST ฿20)" : ""}`,
+            description: `Yaru 1-Day Course – ${pkg.label}${isTest ? " (TEST ฿20)" : ""}`,
             referenceId: ref,
             orderItems: [{ itemName: pkg.item + (isTest ? " (ทดสอบ)" : ""), price: amount, quantity: 1, productId: pkgKey }],
           },
@@ -495,7 +495,7 @@ async function main() {
       : "Beam store links: confirm payments in Beam Lighthouse";
     res.set("Cache-Control", "no-store").send(`<!doctype html><html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-<title>5wan orders (${paid.length} paid)</title>
+<title>1-day course orders (${paid.length} paid)</title>
 <style>body{font-family:system-ui,sans-serif;margin:24px;color:#1f1a14;background:#f7f3ee}
 h1{margin:0 0 4px}.muted{color:#7a6f63}table{border-collapse:collapse;width:100%;background:#fff;margin-top:16px}
 th,td{padding:8px 10px;border-bottom:1px solid #e6dfd6;text-align:left;font-size:14px;vertical-align:top;white-space:nowrap}
@@ -521,7 +521,7 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
     const lines = [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(value(r, c))).join(","))];
     res.set({
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="5wan-orders-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="yaru-1day-orders-${new Date().toISOString().slice(0, 10)}.csv"`,
       "Cache-Control": "no-store",
     });
     res.send("﻿" + lines.join("\r\n")); // BOM so Excel shows Thai names correctly
