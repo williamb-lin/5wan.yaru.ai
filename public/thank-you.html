@@ -37,21 +37,6 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
 }(window, document, 'ttq');
 </script>
 <!-- TikTok Pixel Code End -->
-<script>
-  // Purchase event for TikTok. Value comes from the tier in the URL; event_id = order number
-  // so a refresh isn't counted twice. Test orders (?test=1) are real ฿20 payments and are
-  // reported with their real value of 20.
-  (function () {
-    var q = new URLSearchParams(location.search);
-    var prices = { essential: 3990, vip: 9990, coaching: 250000 };
-    var tier = q.get("tier"), order = q.get("order");
-    if (!prices[tier]) return;
-    ttq.track("CompletePayment", {
-      contents: [{ content_id: tier, content_type: "product", quantity: 1 }],
-      value: q.get("test") === "1" ? 20 : prices[tier], currency: "THB"
-    }, { event_id: order || undefined });
-  })();
-</script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18496929738"></script>
 <script>
@@ -61,40 +46,11 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
   gtag('config', 'AW-18496929738');
 </script>
 <!-- End Google tag -->
-<script>
-  // Google Ads Purchase: fires only once the server confirms this order is paid (Beam webhook,
-  // or the server checking Beam directly), with the amount actually charged and the order
-  // number as transaction_id so a reload or second visit isn't counted twice. Polls for up to
-  // ~2 minutes because the buyer can arrive here a moment before Beam's webhook.
-  // ฿20 test orders are sent too, with their real value of 20, so Purchase can be checked in Tag Assistant.
-  (function () {
-    var order = new URLSearchParams(location.search).get("order");
-    if (!order || !/^5W-[0-9A-F]{10}$/.test(order)) return;
-    var key = "gads_purchase_" + order, tries = 0;
-    try { if (localStorage.getItem(key)) return; } catch (e) {}
-    function check() {
-      fetch("/api/order-status?order=" + encodeURIComponent(order), { cache: "no-store" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (o) {
-          if (o && o.status === "paid") {
-            gtag("event", "conversion", {
-              send_to: "AW-18496929738/GqwmCIbK4pIdEMr_gvRE",
-              value: o.value, currency: o.currency || "THB", transaction_id: order
-            });
-            try { localStorage.setItem(key, "1"); } catch (e) {}
-          } else if ((!o || o.status === "pending") && ++tries < 24) {
-            setTimeout(check, 5000);
-          }
-        })
-        .catch(function () { if (++tries < 24) setTimeout(check, 5000); });
-    }
-    check();
-  })();
-</script>
-    <!-- Purchase confirmation page. Every Beam tier redirects here after payment,
-         so ad platforms' purchase/conversion tags go in this file. -->
+    <!-- Payment confirmation page. Every Beam tier redirects here (/thank-you?tier=…&order=…).
+         The URL only says which order to look up: what's shown, and whether purchase tracking
+         fires, comes from the server's /api/order-status answer. -->
     <meta name="robots" content="noindex" />
-    <title>ชำระเงินเรียบร้อย · Yaru ชาเลนจ์ 5 วัน</title>
+    <title>สถานะการชำระเงิน · Yaru ชาเลนจ์ 5 วัน</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <style>
@@ -121,6 +77,19 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       .card p.body { margin-top: 24px; font-size: 1.125rem; line-height: 1.625; color: var(--muted-foreground); }
       .card p.note { margin-top: 24px; font-size: .875rem; font-weight: 200; color: var(--muted-foreground); }
       .photo { display: block; width: 100%; height: auto; margin-top: 64px; }
+      .card .icon { display: block; margin: 0 auto; }
+      .card[data-state="checking"] .icon { animation: pulse 1.4s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: .35; } }
+      .badge { display: inline-block; margin-top: 16px; padding: 4px 12px; border-radius: 999px; background: var(--foreground); color: var(--primary-foreground); font-size: .8125rem; }
+      .receipt { margin: 24px auto 0; max-width: 420px; text-align: left; border-top: 1px solid hsl(30 20% 85%); }
+      .receipt div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid hsl(30 20% 85%); font-size: 1rem; }
+      .receipt dt { color: var(--muted-foreground); }
+      .receipt dd { margin: 0; font-weight: 700; text-align: right; }
+      .actions { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+      .btn { font: inherit; font-size: 1rem; padding: 12px 24px; border-radius: 999px; border: 0; cursor: pointer; text-decoration: none; background: var(--primary); color: var(--primary-foreground); }
+      .btn.ghost { background: transparent; color: var(--foreground); box-shadow: inset 0 0 0 1px hsl(30 20% 75%); }
+      .btn[disabled] { opacity: .6; cursor: default; }
+      [hidden] { display: none !important; }
       @media (max-width: 480px) { .card { padding: 32px 24px; } }
     </style>
   </head>
@@ -132,15 +101,151 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
       </div>
     </nav>
     <main>
-      <div class="card">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
+      <div class="card" id="card" data-state="checking" aria-live="polite">
+        <svg class="icon" id="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
         </svg>
-        <h1>ชำระเงินเรียบร้อย ยินดีต้อนรับ!</h1>
-        <p class="body">ขอบคุณที่ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว</p>
-        <p class="note">ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย</p>
+        <h1 id="title">กำลังตรวจสอบการชำระเงิน</h1>
+        <span class="badge" id="test-badge" hidden>คำสั่งซื้อทดสอบ · ไม่นับเป็นยอดขาย</span>
+        <p class="body" id="body">กรุณารอสักครู่ เรากำลังยืนยันการชำระเงินของคุณกับ Beam</p>
+        <dl class="receipt" id="receipt" hidden>
+          <div><dt>หมายเลขคำสั่งซื้อ</dt><dd id="r-order"></dd></div>
+          <div><dt>แพ็กเกจ</dt><dd id="r-package"></dd></div>
+          <div><dt>ยอดที่ชำระ</dt><dd id="r-amount"></dd></div>
+        </dl>
+        <p class="note" id="note" hidden></p>
+        <div class="actions">
+          <button class="btn" id="retry" type="button" hidden>ตรวจสอบอีกครั้ง</button>
+          <a class="btn ghost" id="restart" href="/#signup" hidden>กลับไปเลือกแพ็กเกจ</a>
+        </div>
+        <noscript><p class="note">กรุณาเปิดใช้ JavaScript เพื่อตรวจสอบสถานะการชำระเงิน</p></noscript>
       </div>
     </main>
     <img class="photo" src="/assets/thank-you-crowd.jpg" alt="ห้องเวิร์กช็อปของ Yaru ที่เต็มไปด้วยผู้เข้าร่วม" />
+<script>
+  // Payment status + purchase tracking. Everything shown here comes from /api/order-status:
+  // the URL's order number only says which order to look up and is never proof of payment.
+  (function () {
+    var ORDER_RE = /^5W-[0-9A-F]{10}$/;
+    var order = new URLSearchParams(location.search).get("order") || "";
+    var $ = function (id) { return document.getElementById(id); };
+    var PACKAGE_NAMES = { essential: "แพ็กเกจพื้นฐาน", vip: "แพ็กเกจ VIP", coaching: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)" };
+    var ICONS = {
+      clock: '<circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />',
+      check: '<circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />',
+      alert: '<circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" />'
+    };
+    var NOT_PAID = "ถ้าคุณชำระเงินไปแล้วจริง ไม่ต้องชำระซ้ำ กรุณาตรวจสอบอีเมลจาก Beam หรือติดต่อทีม Yaru พร้อมหมายเลขคำสั่งซื้อ";
+    var STATES = {
+      checking: { icon: "clock", title: "กำลังตรวจสอบการชำระเงิน", body: "กรุณารอสักครู่ เรากำลังยืนยันการชำระเงินของคุณกับ Beam" },
+      pending: { icon: "clock", title: "รอการยืนยันการชำระเงิน", body: "เรายังไม่ได้รับการยืนยันการชำระเงินจาก Beam ซึ่งบางครั้งอาจใช้เวลาสักครู่ ถ้าคุณชำระเงินแล้ว ไม่ต้องชำระซ้ำ หน้านี้จะตรวจสอบให้อัตโนมัติ หรือกดตรวจสอบอีกครั้งได้", retry: true },
+      paid: { icon: "check", title: "ชำระเงินเรียบร้อย ยินดีต้อนรับ!", body: "ขอบคุณที่ซื้อคอร์สชาเลนจ์ 5 วันกับ Yaru เราจะส่งรายละเอียดการเริ่มต้นให้คุณทางอีเมลเร็วๆ นี้ การเดินทางจากไอเดียสู่การเปิดตัวของคุณเริ่มต้นแล้ว", note: "ถ้าไม่เห็นอีเมลจากเรา ลองเช็กโฟลเดอร์สแปม แล้วทำเครื่องหมายว่าเราเป็นผู้ส่งที่ปลอดภัย", receipt: true },
+      expired: { icon: "alert", title: "ลิงก์ชำระเงินหมดอายุ", body: "คำสั่งซื้อนี้ยังไม่ได้รับการชำระเงิน และลิงก์ชำระเงินหมดอายุแล้ว กรุณาเลือกแพ็กเกจและเริ่มชำระเงินใหม่อีกครั้ง", note: NOT_PAID, restart: true },
+      cancelled: { icon: "alert", title: "คำสั่งซื้อถูกยกเลิก", body: "คำสั่งซื้อนี้ถูกยกเลิกและยังไม่ได้รับการชำระเงิน กรุณาเลือกแพ็กเกจและเริ่มใหม่อีกครั้ง", note: NOT_PAID, restart: true },
+      refunded: { icon: "alert", title: "คำสั่งซื้อนี้ได้รับการคืนเงินแล้ว", body: "การชำระเงินของคำสั่งซื้อนี้ถูกคืนเงินแล้ว ถ้ามีคำถาม กรุณาติดต่อทีม Yaru พร้อมหมายเลขคำสั่งซื้อ", restart: true },
+      failed: { icon: "alert", title: "การชำระเงินไม่สำเร็จ", body: "เราไม่สามารถสร้างการชำระเงินสำหรับคำสั่งซื้อนี้ได้ และไม่มีการเรียกเก็บเงิน กรุณาลองใหม่อีกครั้ง", restart: true },
+      invalid: { icon: "alert", title: "ไม่พบคำสั่งซื้อ", body: "ลิงก์นี้ไม่มีข้อมูลคำสั่งซื้อที่ถูกต้อง ถ้าคุณเพิ่งชำระเงิน กรุณาตรวจสอบอีเมลจาก Beam หรือติดต่อทีม Yaru", restart: true },
+      unavailable: { icon: "alert", title: "ยังตรวจสอบการชำระเงินไม่ได้", body: "ระบบตรวจสอบการชำระเงินขัดข้องชั่วคราว ถ้าคุณชำระเงินแล้ว ไม่ต้องชำระซ้ำ กรุณากดตรวจสอบอีกครั้งในอีกสักครู่", retry: true }
+    };
+    var STATUS_TO_STATE = { pending: "pending", paid: "paid", expired: "expired", cancelled: "cancelled", refunded: "refunded", error: "failed" };
+
+    function show(name, o) {
+      var st = STATES[name];
+      $("card").setAttribute("data-state", name);
+      $("icon").innerHTML = ICONS[st.icon];
+      $("title").textContent = st.title;
+      $("body").textContent = st.body;
+      $("note").hidden = !st.note;
+      $("note").textContent = st.note || "";
+      $("retry").hidden = !st.retry;
+      $("retry").disabled = false;
+      $("restart").hidden = !st.restart;
+      var receipt = Boolean(st.receipt && o);
+      $("receipt").hidden = !receipt;
+      $("test-badge").hidden = !(receipt && o.test === true);
+      if (receipt) {
+        $("r-order").textContent = o.order;
+        $("r-package").textContent = PACKAGE_NAMES[o.package] || o.package || "-";
+        $("r-amount").textContent = typeof o.value === "number" ? "฿" + o.value.toLocaleString("en-US", { maximumFractionDigits: 2 }) : "-";
+      }
+    }
+
+    // Purchase measurement: Google Ads Purchase + TikTok CompletePayment, sent at most once per
+    // order (across refreshes, retries and tabs) and only for a verified, paid, non-test order
+    // with a real amount in THB. Failures here never affect what the buyer sees.
+    var tracked = false;
+    function trackPurchase(o) {
+      try {
+        if (o && o.status === "paid") {
+          if (o.test) return;
+          if (tracked || o.test !== false) return;
+          if (typeof o.order !== "string" || o.order !== order || !ORDER_RE.test(o.order)) return;
+          if (typeof o.value !== "number" || !isFinite(o.value) || o.value <= 0) return;
+          if (o.currency !== "THB") return;
+          var key = "yaru_purchase_tracked_" + o.order;
+          try { if (localStorage.getItem(key)) { tracked = true; return; } localStorage.setItem(key, String(Date.now())); } catch (e) {}
+          tracked = true;
+          try {
+            if (typeof gtag === "function") gtag("event", "conversion", {
+              send_to: "AW-18496929738/GqwmCIbK4pIdEMr_gvRE",
+              value: o.value, currency: "THB", transaction_id: o.order
+            });
+          } catch (e) {}
+          try {
+            if (window.ttq && typeof window.ttq.track === "function") window.ttq.track("CompletePayment", {
+              contents: [{ content_id: o.package, content_type: "product", quantity: 1 }],
+              value: o.value, currency: "THB"
+            }, { event_id: o.order });
+          } catch (e) {}
+        }
+      } catch (e) {}
+    }
+
+    if (!ORDER_RE.test(order)) { show("invalid"); return; }
+
+    var POLL_MS = 5000, MAX_POLLS = 24, MAX_FAILS = 3;
+    var polls = 0, fails = 0, timer = null, busy = false, lastState = "checking", done = false;
+
+    function schedule() { clearTimeout(timer); timer = setTimeout(check, POLL_MS); }
+    function check() {
+      if (busy || done) return;
+      busy = true;
+      fetch("/api/order-status?order=" + encodeURIComponent(order), { cache: "no-store" })
+        .then(function (r) {
+          if (r.status === 400 || r.status === 404) return { invalid: true };
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (o) {
+          busy = false;
+          if (o.invalid) { done = true; show("invalid"); return; }
+          if (!o || o.order !== order || !STATUS_TO_STATE[o.status]) throw new Error("unexpected response");
+          fails = 0;
+          var name = STATUS_TO_STATE[o.status];
+          lastState = name;
+          show(name, o);
+          if (name === "paid") { done = true; trackPurchase(o); return; }
+          if (name === "pending" && ++polls < MAX_POLLS) schedule();
+          if (name !== "pending") done = true;
+        })
+        .catch(function () {
+          busy = false;
+          if (++fails >= MAX_FAILS) { show("unavailable"); return; }
+          show(lastState === "pending" ? "pending" : "checking");
+          schedule();
+        });
+    }
+    $("retry").addEventListener("click", function () {
+      if (busy) return;
+      polls = 0; fails = 0; done = false;
+      $("retry").disabled = true;
+      show(lastState === "pending" ? "pending" : "checking");
+      $("retry").disabled = true;
+      clearTimeout(timer);
+      check();
+    });
+    check();
+  })();
+</script>
   </body>
 </html>

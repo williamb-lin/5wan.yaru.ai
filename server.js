@@ -77,7 +77,7 @@ const toE164 = (p) => {
   return d.startsWith("0") ? "+66" + d.slice(1) : "+66" + d;
 };
 async function reportPurchaseToTikTok(order, phone) {
-  if (!TIKTOK.token) return;
+  if (!TIKTOK.token || isTestOrder(order)) return; // ฿20 test orders aren't reported as purchases
   const email = String(order.email || "").trim().toLowerCase();
   const tel = toE164(phone || order.phone);
   const user = {};
@@ -402,7 +402,7 @@ async function main() {
       try {
         await store.create(order);
         console.log(`[checkout] order ${ref} -> store link (${pkgKey}, source: ${order.utm_source || "direct"})`);
-        return res.json({ url: pkg.storeLink });
+        return res.json({ url: pkg.storeLink, value: amount / 100, currency: "THB" });
       } catch (err) {
         console.error(`[checkout] order ${ref} failed:`, err.message);
         return res.status(500).json({ message: "Could not start payment" });
@@ -441,7 +441,7 @@ async function main() {
       );
       await store.update(ref, { payment_link_id: link.id });
       console.log(`[checkout] order ${ref} created (${pkgKey}, ${order.beam_env}, source: ${order.utm_source || "direct"})`);
-      res.json({ url: link.url });
+      res.json({ url: link.url, value: amount / 100, currency: "THB" }); // value in baht, for Begin checkout
     } catch (err) {
       console.error(`[checkout] order ${ref} failed:`, err.message);
       await store.update(ref, { status: "error" }).catch(() => {});
@@ -466,7 +466,8 @@ async function main() {
         if (statusChecks.size > 5000) statusChecks.clear();
         await refreshFromBeam(store, order).catch((e) => console.warn("[status] refresh", ref, e.message));
       }
-      res.json({ status: order.status, package: order.package, value: Number(order.amount) / 100, currency: order.currency || "THB", test: isTestOrder(order) });
+      // value is in baht (amounts are stored in satang).
+      res.json({ order: order.ref, status: order.status, package: order.package, value: Number(order.amount) / 100, currency: order.currency || "THB", test: isTestOrder(order) });
     } catch (err) {
       console.error("[status]", ref, err.message);
       res.status(500).json({ message: "error" });

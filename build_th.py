@@ -239,11 +239,10 @@ js = sub_exact(js,
     'fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t.name,email:t.email,interest:"challenge",motivation:"5-day challenge signup",linkedin:"",twitter:"",tiktok:"",fellowship:"not-sure"})}),fetch("/api/circle/add-contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({firstName:c,email:t.email})}).catch(p=>console.warn("Circle add-contact error (non-blocking):",p))',
     'fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t.name,email:t.email,params:Object.fromEntries(new URLSearchParams(location.search)),referrer:document.referrer})})',
     1)
-# Keep Thai waitlist conversions separate from English course sign-ups in GTM / Meta
-js = sub_exact(js, 'event:"generate_lead",currency:"USD",value:997,lead_source:"subscribe_widget"',
-               'event:"begin_checkout",lead_source:"checkout_th"', 1)
-js = sub_exact(js, 'content_name:"Course Sign Up",status:"registered"',
-               'content_name:"TH 5-Day Challenge Checkout",status:"checkout_started"', 1)
+# The English site's GTM dataLayer push and Meta call are removed: this site has no GTM
+# container or Meta pixel, and Google Ads gets Begin checkout directly (below).
+js = sub_exact(js, 'window.dataLayer=window.dataLayer||[],window.dataLayer.push({event:"generate_lead",currency:"USD",value:997,lead_source:"subscribe_widget"}),'
+               'typeof window.fbq=="function"&&window.fbq("track","CompleteRegistration",{content_name:"Course Sign Up",status:"registered"}),', '', 1)
 
 # Paid course: three packages. Shown as cards in the sign-up section and chosen on
 # the form (saved with the sign-up as "essential" / "vip" / "coaching").
@@ -280,11 +279,10 @@ js = js[:_i] + js[_j + 1:]
 # LINE Tag conversion: fired the moment someone clicks the pay button (form submit),
 # whether or not they finish paying. The redirect to Beam waits 400ms so the LINE
 # beacon has time to leave the page.
+# One checkout attempt at a time: a second click or Enter while one is in flight (or during
+# the redirect) is ignored, so it can't create a second order or repeat the events.
 js = sub_exact(js, 'u.preventDefault(),o(!0);',
-               'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);'
-               # Google Ads Begin checkout (Secondary, observation only), once its label is set above.
-               + ('window.gtag&&window.gtag("event","conversion",{send_to:"' + GOOGLE_ADS_ID + '/' + GOOGLE_BEGIN_CHECKOUT_LABEL
-                  + '",value:' + J(TIER_PRICES) + '[t.pkg],currency:"THB"});' if GOOGLE_BEGIN_CHECKOUT_LABEL else '') +
+               'u.preventDefault();if(window.__ytCk)return;window.__ytCk=1;o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);' +
                # TikTok: identify the buyer by SHA-256 of their email (hashed in the browser, never sent
                # in plain text), make sure the funnel has AddToCart, then InitiateCheckout with tier + price.
                # (The thank-you page and the server's Events API send the Purchase.)
@@ -295,9 +293,18 @@ js = sub_exact(js, 'u.preventDefault(),o(!0);',
                'window.ttq.track("InitiateCheckout",{contents:c,value:P[t.pkg],currency:"THB"})})();', 1)
 # On success the server returns Beam's payment-link URL: send the buyer there (no toast).
 # After paying, Beam sends them to the separate /thank-you page.
-js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
+# Google Ads Begin checkout (Secondary): sent only once the server has accepted the form and
+# created the Beam checkout, with the amount the server says it will charge (baht).
+# The redirect waits 400ms so the beacons can leave; the button stays disabled until then.
+# If the buyer comes back with the browser's Back button (page restored from cache), reset.
+js = sub_exact(js, 's(!0),e({title:"You\'re in!"', 'const _ck=await f.json();' +
+               ('typeof _ck.value=="number"&&_ck.value>0&&window.gtag&&window.gtag("event","conversion",{send_to:"' + GOOGLE_ADS_ID + '/'
+                + GOOGLE_BEGIN_CHECKOUT_LABEL + '",value:_ck.value,currency:"THB"});' if GOOGLE_BEGIN_CHECKOUT_LABEL else '') +
+               'window.__ytGo=1;window.addEventListener("pageshow",ev=>{ev.persisted&&(window.__ytGo=0,window.__ytCk=0,o(!1))},{once:!0});e({title:"You\'re in!"', 1)
 js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 is on its way."}),n({name:"",email:"",pkg:"essential"})',
                'setTimeout(()=>window.location.assign(_ck.url),400)', 1)
+js = sub_exact(js, 'catch(c){console.error("Form submission error:",c),', 'catch(c){window.__ytCk=0,console.error("Form submission error:",c),', 1)
+js = sub_exact(js, 'finally{o(!1)}', 'finally{window.__ytGo||o(!1)}', 1)
 js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'body:JSON.stringify({name:t.name,email:t.email,package:t.pkg,params', 1)
 js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกแพ็กเกจที่สนใจ") + '}),'
