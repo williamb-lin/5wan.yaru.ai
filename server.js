@@ -9,7 +9,8 @@
 //   BEAM_API_KEY            Beam Lighthouse → Developers → API Key (secret, server only)
 //   BEAM_WEBHOOK_HMAC_KEY   Beam Lighthouse → Developers → Webhooks → your webhook's HMAC key
 //   BEAM_ENV                "playground" (test money, default) or "production" (real money)
-//   PUBLIC_BASE_URL         optional, e.g. https://5wan.yaru.ai — where Beam sends buyers back
+//   PUBLIC_BASE_URL         optional, e.g. https://start.yaru.ai — where Beam sends buyers back
+//                           (an old https://5wan.yaru.ai value is treated as https://start.yaru.ai)
 //   TIKTOK_ACCESS_TOKEN     optional: TikTok Events API token (Events Manager → pixel → Generate access token);
 //                           when set, each paid order is reported to TikTok as a Purchase from the server
 //   TIKTOK_TEST_EVENT_CODE  optional: send Events API calls to TikTok's "Test events" instead of live data
@@ -68,6 +69,18 @@ const TIKTOK = {
   testCode: process.env.TIKTOK_TEST_EVENT_CODE || "",
   api: process.env.TIKTOK_API_BASE || "https://business-api.tiktok.com", // override for local testing only
 };
+// The site moved from 5wan.yaru.ai to start.yaru.ai. Links we generate (Beam's return
+// address, TikTok's page URL) always use the current domain, even if PUBLIC_BASE_URL
+// still holds the old one.
+const SITE_URL = "https://start.yaru.ai";
+const OLD_HOSTS = ["5wan.yaru.ai"];
+function siteBase(fallback) {
+  const base = (process.env.PUBLIC_BASE_URL || fallback || SITE_URL).replace(/\/+$/, "");
+  try {
+    if (OLD_HOSTS.includes(new URL(base).hostname)) return SITE_URL;
+  } catch {}
+  return base;
+}
 const sha256 = (v) => crypto.createHash("sha256").update(v).digest("hex");
 const toE164 = (p) => {
   const d = String(p || "").replace(/[^\d+]/g, "");
@@ -97,7 +110,7 @@ async function reportPurchaseToTikTok(order, phone) {
         value: Number(order.amount) / 100,
         contents: [{ content_id: order.package, content_type: "product", quantity: 1 }],
       },
-      page: { url: `${(process.env.PUBLIC_BASE_URL || "https://5wan.yaru.ai").replace(/\/+$/, "")}/thank-you` },
+      page: { url: `${siteBase()}/thank-you` },
     }],
   };
   try {
@@ -409,7 +422,7 @@ async function main() {
       }
     }
 
-    const base = (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/+$/, "");
+    const base = siteBase(`${req.protocol}://${req.get("host")}`);
     try {
       await store.create(order);
       const link = await beamRequest(

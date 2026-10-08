@@ -23,7 +23,7 @@ Thai version of [challenge.yaru.ai](https://challenge.yaru.ai), translated to Th
    | `BEAM_API_KEY` | Beam Lighthouse → Developers → API Key |
    | `BEAM_WEBHOOK_HMAC_KEY` | Beam Lighthouse → Developers → Webhooks → the webhook's HMAC key |
    | `BEAM_ENV` | `playground` for test payments, `production` for real money |
-   | `PUBLIC_BASE_URL` | `https://5wan.yaru.ai` (where Beam sends buyers back) |
+   | `PUBLIC_BASE_URL` | `https://start.yaru.ai` (where Beam sends buyers back; an old 5wan.yaru.ai value is treated as start.yaru.ai) |
 
    Playground and production keys are different; use the pair that matches `BEAM_ENV`.
 3. **Beam webhook:** in Lighthouse → Developers → Webhooks, create one pointing to `https://5wan.yaru.ai/api/beam/webhook` with events `payment_link.paid` and `charge.succeeded`.
