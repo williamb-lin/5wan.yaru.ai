@@ -254,6 +254,7 @@ PLANS = [
 ]
 PKG_CHOICES = [["essential", "พื้นฐาน", "฿3,990"], ["vip", "VIP", "฿9,990"], ["coaching", "โค้ชชิ่งตัวต่อตัว", "฿250,000 / เดือน"]]
 LINE_TAG_ID = "34e8f29d-a401-4dcc-b551-e49132bbd5d4"
+TIER_PRICES = {"essential": 3990, "vip": 9990, "coaching": 250000}  # baht, for ad-platform event values
 J = lambda o: json.dumps(o, ensure_ascii=False)
 js = sub_exact(js, 'm.jsx("ul",{className:"space-y-3",children:X1.map(',
     'm.jsx("div",{className:"yt-plans",children:' + J(PLANS) + '.map(p=>m.jsxs("div",{className:"yt-plan",children:['
@@ -278,7 +279,10 @@ js = js[:_i] + js[_j + 1:]
 # whether or not they finish paying. The redirect to Beam waits 400ms so the LINE
 # beacon has time to leave the page.
 js = sub_exact(js, 'u.preventDefault(),o(!0);',
-               'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);', 1)
+               'u.preventDefault(),o(!0);window._lt&&window._lt("send","cv",{type:"Conversion"},["' + LINE_TAG_ID + '"]);'
+               # TikTok: InitiateCheckout with the tier and its price (thank-you page sends CompletePayment)
+               'window.ttq&&window.ttq.track("InitiateCheckout",{contents:[{content_id:t.pkg,content_type:"product",quantity:1}],value:'
+               + J(TIER_PRICES) + '[t.pkg],currency:"THB"});', 1)
 # On success the server returns Beam's payment-link URL: send the buyer there (no toast).
 # After paying, Beam sends them to the separate /thank-you page.
 js = sub_exact(js, 's(!0),window.dataLayer=window.dataLayer||[]', 'const _ck=await f.json();window.dataLayer=window.dataLayer||[]', 1)
@@ -443,7 +447,21 @@ _lt('send', 'pv', ['34e8f29d-a401-4dcc-b551-e49132bbd5d4']);
 """
 # after the charset/viewport tags, so the UTF-8 declaration stays first in <head>
 VIEWPORT = '    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />\n'
-html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE, 1)
+TIKTOK_PIXEL_BASE = """<!-- TikTok Pixel Code Start -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+
+
+  ttq.load('DB3I03JC77U04C8M6HN0');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- TikTok Pixel Code End -->
+"""
+html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE + TIKTOK_PIXEL_BASE, 1)
 html = sub_exact(html, "/assets/index-DQqFpzXo.js", "/assets/index-th.js", 1)
 html = sub_exact(html, "/assets/index-K9wBeB5c.css", "/assets/index-th.css", 1)
 (OUT / "index.html").write_text(html)

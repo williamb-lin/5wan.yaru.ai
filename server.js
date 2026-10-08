@@ -364,7 +364,7 @@ async function main() {
             buyNowPayLater: { isEnabled: false },
           },
           collectPhoneNumber: true,
-          redirectUrl: `${base}/thank-you?tier=${pkgKey}&order=${ref}`, // separate confirmation page; tier lets ad tags report the value
+          redirectUrl: `${base}/thank-you?tier=${pkgKey}&order=${ref}${isTest ? "&test=1" : ""}`, // separate confirmation page; tier lets ad tags report the value
           cancelUrl: `${base}/?payment=cancelled#signup`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         },
