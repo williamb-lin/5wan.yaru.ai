@@ -10,6 +10,8 @@
 //   BEAM_WEBHOOK_HMAC_KEY   Beam Lighthouse → Developers → Webhooks → your webhook's HMAC key
 //   BEAM_ENV                "playground" (test money, default) or "production" (real money)
 //   PUBLIC_BASE_URL         optional, e.g. https://5wan.yaru.ai — where Beam sends buyers back
+//   TEST_CHECKOUT_CODE      optional: visiting /?test=<code> makes any tier a real ฿20 charge,
+//                           for end-to-end testing; such orders are marked TEST in /admin
 //   PORT                    optional, defaults to 3000
 "use strict";
 
@@ -36,6 +38,11 @@ const PACKAGES = {
   coaching: { label: "1:1 Coaching", item: "โค้ชชิ่งแบบตัวต่อตัว (1 เดือน)", amount: 25000000,
               storeLink: "https://pay.beamcheckout.com/yaru-aqbm4q/1on1Coach" },
 };
+// Test checkouts: real Beam payment for ฿20 (2000 satang) instead of the tier price.
+const TEST_AMOUNT = 2000;
+const TEST_CODE = process.env.TEST_CHECKOUT_CODE || "";
+const isTestOrder = (r) => String(r.beam_env || "").endsWith("-test");
+
 const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
 
 const BEAM = {
@@ -177,7 +184,7 @@ function validBeamSignature(rawBody, signature) {
 
 // Ask Beam for a pending order's link status (backup for missed webhooks).
 async function refreshFromBeam(store, order) {
-  if (!BEAM.ready || order.status !== "pending" || !order.payment_link_id || order.beam_env !== BEAM.env) return;
+  if (!BEAM.ready || order.status !== "pending" || !order.payment_link_id || String(order.beam_env).replace(/-test$/, "") !== BEAM.env) return;
   const link = await beamRequest("GET", `/api/v1/payment-links/${encodeURIComponent(order.payment_link_id)}`);
   const status = LINK_STATUS[link.status];
   if (status && status !== order.status) {
@@ -313,8 +320,11 @@ async function main() {
 
     const params = {};
     for (const [k, v] of Object.entries(req.body?.params || {}).slice(0, 30)) params[clip(k, 50)] = clip(v, 300);
+    const isTest = Boolean(TEST_CODE) && BEAM.ready && params.test === TEST_CODE;
+    delete params.test; // never store the code
     const ref = "5W-" + crypto.randomBytes(5).toString("hex").toUpperCase();
-    const order = { ref, name, email, package: pkgKey, amount: pkg.amount, beam_env: BEAM.env, params, referrer: clip(req.body?.referrer, 500) };
+    const amount = isTest ? TEST_AMOUNT : pkg.amount;
+    const order = { ref, name, email, package: pkgKey, amount, beam_env: BEAM.env + (isTest ? "-test" : ""), params, referrer: clip(req.body?.referrer, 500) };
     for (const f of AD_FIELDS) order[f] = params[f] || null;
 
     if (!BEAM.ready) {
@@ -339,10 +349,10 @@ async function main() {
         {
           order: {
             currency: "THB",
-            netAmount: pkg.amount,
-            description: `Yaru 5-Day Challenge – ${pkg.label}`,
+            netAmount: amount,
+            description: `Yaru 5-Day Challenge – ${pkg.label}${isTest ? " (TEST ฿20)" : ""}`,
             referenceId: ref,
-            orderItems: [{ itemName: pkg.item, price: pkg.amount, quantity: 1, productId: pkgKey }],
+            orderItems: [{ itemName: pkg.item + (isTest ? " (ทดสอบ)" : ""), price: amount, quantity: 1, productId: pkgKey }],
           },
           // The account has no default methods for API links, so list them (Beam rejects a link with none).
           linkSettings: {
@@ -361,7 +371,7 @@ async function main() {
         ref
       );
       await store.update(ref, { payment_link_id: link.id });
-      console.log(`[checkout] order ${ref} created (${pkgKey}, ${BEAM.env}, source: ${order.utm_source || "direct"})`);
+      console.log(`[checkout] order ${ref} created (${pkgKey}, ${order.beam_env}, source: ${order.utm_source || "direct"})`);
       res.json({ url: link.url });
     } catch (err) {
       console.error(`[checkout] order ${ref} failed:`, err.message);
@@ -376,7 +386,8 @@ async function main() {
     const recentPending = rows.filter((r) => r.status === "pending" && Date.now() - new Date(r.created_at) < 3 * 864e5).slice(0, 25);
     for (const r of recentPending) await refreshFromBeam(store, r).catch((e) => console.warn("[admin] refresh", r.ref, e.message));
 
-    const paid = rows.filter((r) => r.status === "paid");
+    const paid = rows.filter((r) => r.status === "paid" && !isTestOrder(r));
+    const testCount = rows.filter(isTestOrder).length;
     const byPackage = {};
     for (const r of paid) {
       const k = PACKAGES[r.package]?.label || r.package;
@@ -400,10 +411,11 @@ background:#c62a35;color:#fff;border-radius:8px;text-decoration:none}.wrap{overf
 <h1>Orders: ${paid.length} paid · ${esc(baht(revenue))}</h1>
 <div class="muted"><span class="mode">${esc(mode)}</span> · storage: ${store.kind}</div>
 <div class="muted">Paid by package: ${Object.entries(byPackage).map(([k, v]) => `${esc(k)} ${v.n} (${esc(baht(v.sum))})`).join(" · ") || "none yet"}</div>
-<div class="muted">Not marked paid: ${rows.length - paid.length}${BEAM.ready ? " (pending, expired, cancelled or failed)" : " (sent to Beam; with store links, check Beam Lighthouse for who actually paid)"}</div>
+${testCount ? `<div class="muted">Test orders (฿20, not counted above): ${testCount}</div>` : ""}
+<div class="muted">Not marked paid: ${rows.filter((r) => r.status !== "paid" && !isTestOrder(r)).length}${BEAM.ready ? " (pending, expired, cancelled or failed)" : " (sent to Beam; with store links, check Beam Lighthouse for who actually paid)"}</div>
 <a class="btn" href="/admin/orders.csv">Download CSV</a>
 <div class="wrap"><table><thead><tr><th>Created (Bangkok)</th><th>Status</th><th>Order</th><th>Name</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Paid (Bangkok)</th><th>Method</th><th>utm_source</th><th>utm_campaign</th></tr></thead><tbody>
-${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${STATUS_COLOR[r.status] || "#1f1a14"};font-weight:600">${esc(r.status)}</td><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(PACKAGES[r.package]?.label || r.package)}</td><td>${esc(baht(r.amount))}</td><td>${esc(fmtDate(r.paid_at))}</td><td>${esc(r.payment_method)}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td></tr>`).join("\n")}
+${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${STATUS_COLOR[r.status] || "#1f1a14"};font-weight:600">${esc(r.status)}${isTestOrder(r) ? ' <span style="background:#1f1a14;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px">TEST</span>' : ""}</td><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(PACKAGES[r.package]?.label || r.package)}</td><td>${esc(baht(r.amount))}</td><td>${esc(fmtDate(r.paid_at))}</td><td>${esc(r.payment_method)}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td></tr>`).join("\n")}
 </tbody></table></div></body></html>`);
   });
 

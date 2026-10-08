@@ -43,6 +43,10 @@ Check: `/healthz` returns `{"ok":true,"storage":"postgres","beam":"production","
 
 `public/thank-you.html`, served at **`/thank-you`**: a standalone page, separate from the landing page (it loads none of the landing page's code). Every tier lands here after paying: Beam payment links are created with `redirectUrl` = `/thank-you?tier=essential|vip|coaching&order=…`. **Ad platforms' purchase tags go in this file only.** The landing page contains no confirmation content; old `/?payment=success…` links are forwarded here.
 
+## Testing with real ฿20 payments
+
+Set `TEST_CHECKOUT_CODE` in Replit Secrets, then open `https://5wan.yaru.ai/?test=<code>`: any tier is charged ฿20 through live Beam (real payment), returns to `/thank-you`, and is marked **TEST** in `/admin` (excluded from totals). Refund test payments in Beam Lighthouse. Without the code, normal prices apply.
+
 ## Tagging ad links
 
 Put UTM tags on the landing-page ad URL so `/admin` can tell sources apart, e.g.
