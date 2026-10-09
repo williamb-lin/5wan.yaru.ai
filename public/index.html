@@ -3,6 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<script>
+  (function () {
+    try {
+      if (window.yaruConsent && window.yaruConsent.ads === false) return;
+      var KEYS = ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","utm_id","gclid","gbraid","wbraid","ttclid","ldtag_cl"];
+      var q = new URLSearchParams(location.search), t = {}, n = 0;
+      KEYS.forEach(function (k) { var v = q.get(k); if (v) { t[k] = v.slice(0, 300); n++; } });
+      if (!n) return;
+      t.ts = new Date().toISOString(); t.landing = location.pathname;
+      var s = JSON.parse(localStorage.getItem("yaru_attr") || "{}");
+      var old = s.first && Date.now() - Date.parse(s.first.ts) > 90 * 864e5;
+      if (!s.first || old) s.first = t;
+      s.last = t;
+      localStorage.setItem("yaru_attr", JSON.stringify(s));
+    } catch (e) {}
+  })();
+</script>
 <!-- LINE Tag Base Code -->
 <!-- Do Not Modify -->
 <script>

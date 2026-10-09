@@ -305,7 +305,9 @@ js = sub_exact(js, 'e({title:"You\'re in!",description:"Check your email. Day 1 
                'setTimeout(()=>window.location.assign(_ck.url),400)', 1)
 js = sub_exact(js, 'catch(c){console.error("Form submission error:",c),', 'catch(c){window.__ytCk=0,console.error("Form submission error:",c),', 1)
 js = sub_exact(js, 'finally{o(!1)}', 'finally{window.__ytGo||o(!1)}', 1)
-js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'body:JSON.stringify({name:t.name,email:t.email,package:t.pkg,params', 1)
+js = sub_exact(js, 'body:JSON.stringify({name:t.name,email:t.email,params', 'body:JSON.stringify({name:t.name,email:t.email,package:t.pkg,'
+               'attribution:(()=>{try{const a=JSON.parse(localStorage.getItem("yaru_attr")||"{}");'
+               'return{first:a.first||null,last:a.last||null,consent:window.yaruConsent?(window.yaruConsent.ads===false?"denied":"granted"):"not_collected"}}catch(_){return{}}})(),params', 1)
 js = sub_exact(js, 'm.jsx(mn,{type:"submit"',
     'm.jsxs("div",{className:"space-y-2",children:[m.jsx(ca,{children:' + J("เลือกแพ็กเกจที่สนใจ") + '}),'
     'm.jsx("div",{className:"yt-pkgs",role:"radiogroup",children:' + J(PKG_CHOICES) + '.map(([k,l,d])=>m.jsxs("label",{className:"yt-pkg"+(t.pkg===k?" yt-pkg-on":""),children:['
@@ -501,7 +503,29 @@ GOOGLE_TAG_BASE = """<!-- Google tag (gtag.js) -->
 </script>
 <!-- End Google tag -->
 """ % (GOOGLE_ADS_ID, GOOGLE_ADS_ID)
-html = sub_exact(html, VIEWPORT, VIEWPORT + LINE_TAG_BASE + TIKTOK_PIXEL_BASE + TIKTOK_VIEW_CONTENT + GOOGLE_TAG_BASE, 1)
+# Ad-touch capture: saves allowlisted ad parameters from the landing URL (first and latest
+# ad visit, with time and landing path) in this browser, so they reach the order even if the
+# visitor browses around or comes back later. Nothing is captured if a consent choice exists
+# and says no (window.yaruConsent.ads === false); there is no consent banner yet.
+ATTRIBUTION_CAPTURE = """<script>
+  (function () {
+    try {
+      if (window.yaruConsent && window.yaruConsent.ads === false) return;
+      var KEYS = ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","utm_id","gclid","gbraid","wbraid","ttclid","ldtag_cl"];
+      var q = new URLSearchParams(location.search), t = {}, n = 0;
+      KEYS.forEach(function (k) { var v = q.get(k); if (v) { t[k] = v.slice(0, 300); n++; } });
+      if (!n) return;
+      t.ts = new Date().toISOString(); t.landing = location.pathname;
+      var s = JSON.parse(localStorage.getItem("yaru_attr") || "{}");
+      var old = s.first && Date.now() - Date.parse(s.first.ts) > 90 * 864e5;
+      if (!s.first || old) s.first = t;
+      s.last = t;
+      localStorage.setItem("yaru_attr", JSON.stringify(s));
+    } catch (e) {}
+  })();
+</script>
+"""
+html = sub_exact(html, VIEWPORT, VIEWPORT + ATTRIBUTION_CAPTURE + LINE_TAG_BASE + TIKTOK_PIXEL_BASE + TIKTOK_VIEW_CONTENT + GOOGLE_TAG_BASE, 1)
 html = sub_exact(html, "/assets/index-DQqFpzXo.js", "/assets/index-th.js", 1)
 html = sub_exact(html, "/assets/index-K9wBeB5c.css", "/assets/index-th.css", 1)
 (OUT / "index.html").write_text(html)

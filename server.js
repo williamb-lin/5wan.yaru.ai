@@ -45,7 +45,29 @@ const PACKAGES = {
 // Test checkouts: real Beam payment for ฿20 (2000 satang) instead of the tier price.
 const TEST_AMOUNT = 2000;
 const TEST_CODE = process.env.TEST_CHECKOUT_CODE || "";
-const isTestOrder = (r) => String(r.beam_env || "").endsWith("-test");
+// Purchase destinations (TikTok, Google, the thank-you page's tags) only ever get real-money
+// orders on the production Beam account. ฿20 test orders ("production-test"), playground
+// orders and store-link orders (amount not verified per order) never count as purchases.
+const isProductionOrder = (r) => r.beam_env === "production";
+// For reports: real money received (production API orders + matched store-link orders).
+const isRealOrder = (r) => r.beam_env === "production" || r.beam_env === "store_link";
+
+// Ad-click attribution kept with each order. The landing page saves the first and the latest
+// ad visit (allowlisted URL parameters + timestamp) and sends both with the checkout.
+// Policy: order columns (utm_source, …, ttclid) = LAST ad touch before checkout; the first
+// touch is kept alongside in params._attr.first. Identifiers are stored exactly as received.
+const ATTR_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "utm_id",
+  "gclid", "gbraid", "wbraid", "ttclid", "ldtag_cl"];
+const SAFE_VALUE = /^[^\u0000-\u001f<>"'`\\]{1,300}$/;
+function cleanTouch(t) {
+  if (!t || typeof t !== "object") return null;
+  const out = {};
+  for (const k of ATTR_KEYS) if (typeof t[k] === "string" && SAFE_VALUE.test(t[k])) out[k] = t[k];
+  if (!Object.keys(out).length) return null;
+  if (typeof t.ts === "string" && !isNaN(Date.parse(t.ts))) out.ts = new Date(t.ts).toISOString();
+  if (typeof t.landing === "string") out.landing = t.landing.slice(0, 200);
+  return out;
+}
 
 const AD_FIELDS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "ttclid"];
 
@@ -89,25 +111,30 @@ const toE164 = (p) => {
   if (d.startsWith("66")) return "+" + d;
   return d.startsWith("0") ? "+66" + d.slice(1) : "+66" + d;
 };
-async function reportPurchaseToTikTok(order, phone) {
-  if (!TIKTOK.token || isTestOrder(order)) return; // ฿20 test orders aren't reported as purchases
+// Sends one paid order to the TikTok Events API as CompletePayment (same event name and
+// event_id = order number as the browser event on /thank-you, so TikTok keeps one).
+// Returns { ok, ack } or { ok: false, error }. Called only by the delivery queue below.
+async function sendTikTokPurchase(order) {
   const email = String(order.email || "").trim().toLowerCase();
-  const tel = toE164(phone || order.phone);
+  const tel = toE164(order.phone);
+  const attr = order.params?._attr || {};
+  const ttclid = attr.last?.ttclid || attr.first?.ttclid || order.ttclid || "";
   const user = {};
   if (email) user.email = sha256(email);
   if (tel) user.phone = sha256(tel);
+  if (ttclid) user.ttclid = ttclid; // Events API 2.0: data[].user.ttclid, sent as received
   const body = {
     event_source: "web",
     event_source_id: TIKTOK.pixel,
     ...(TIKTOK.testCode ? { test_event_code: TIKTOK.testCode } : {}),
     data: [{
       event: "CompletePayment",
-      event_time: Math.floor(Date.now() / 1000),
+      event_time: Math.floor(new Date(order.paid_at || Date.now()).getTime() / 1000),
       event_id: order.ref,
       user,
       properties: {
         currency: "THB",
-        value: Number(order.amount) / 100,
+        value: Number(order.amount) / 100, // satang -> baht, once
         contents: [{ content_id: order.package, content_type: "product", quantity: 1 }],
       },
       page: { url: `${siteBase()}/thank-you` },
@@ -121,10 +148,10 @@ async function reportPurchaseToTikTok(order, phone) {
       signal: AbortSignal.timeout(10000),
     });
     const data = await res.json().catch(() => ({}));
-    if (data.code === 0) console.log(`[tiktok] purchase ${order.ref} reported${TIKTOK.testCode ? " (test events)" : ""}`);
-    else console.warn(`[tiktok] purchase ${order.ref} not accepted: ${res.status} ${data.code} ${data.message || ""}`);
+    if (res.ok && data.code === 0) return { ok: true, ack: data.request_id || "code 0" };
+    return { ok: false, error: `${res.status} ${data.code ?? ""} ${String(data.message || "").slice(0, 200)}`.trim() };
   } catch (err) {
-    console.warn(`[tiktok] purchase ${order.ref} failed: ${err.message}`);
+    return { ok: false, error: err.message };
   }
 }
 
@@ -191,6 +218,36 @@ function createStore() {
         const r = await pool.query("SELECT * FROM orders WHERE ref = $1", [ref]);
         return r.rows[0] || null;
       },
+      // Idempotent paid transition: only one caller (webhook, retry, refresh) gets the row back.
+      async markPaid(ref, fields, paidAt) {
+        const keys = Object.keys(fields);
+        const r = await pool.query(
+          `UPDATE orders SET status = 'paid', paid_at = COALESCE(paid_at, $2)${keys.map((k, i) => `, ${k} = $${i + 3}`).join("")}
+           WHERE ref = $1 AND status NOT IN ('paid', 'refunded', 'partially_refunded') RETURNING *`,
+          [ref, paidAt, ...keys.map((k) => fields[k])]
+        );
+        return r.rows[0] || null;
+      },
+      async mergeParams(ref, obj) {
+        await pool.query("UPDATE orders SET params = COALESCE(params, '{}'::jsonb) || $2::jsonb WHERE ref = $1", [ref, JSON.stringify(obj)]);
+      },
+      async setDelivery(ref, platform, state) {
+        await pool.query(
+          `UPDATE orders SET params = jsonb_set(COALESCE(params, '{}'::jsonb) || jsonb_build_object('_delivery', COALESCE(params->'_delivery', '{}'::jsonb)),
+             ARRAY['_delivery', $2::text], $3::jsonb) WHERE ref = $1`,
+          [ref, platform, JSON.stringify(state)]
+        );
+      },
+      // Claim a due delivery for this instance (lease), so two instances don't send at once.
+      async claimDelivery(ref, platform, leaseUntil, now) {
+        const r = await pool.query(
+          `UPDATE orders SET params = jsonb_set(params, ARRAY['_delivery', $2::text, 'lease_until'], to_jsonb($3::text))
+           WHERE ref = $1 AND params->'_delivery'->$2->>'status' = 'pending'
+             AND COALESCE(params->'_delivery'->$2->>'lease_until', '') < $4 RETURNING ref`,
+          [ref, platform, leaseUntil, now]
+        );
+        return r.rowCount === 1;
+      },
       async list() {
         const r = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
         return r.rows;
@@ -222,6 +279,29 @@ function createStore() {
     },
     async byRef(ref) {
       return read().find((r) => r.ref === ref) || null;
+    },
+    async markPaid(ref, fields, paidAt) {
+      const rows = read();
+      const row = rows.find((r) => r.ref === ref && !["paid", "refunded", "partially_refunded"].includes(r.status));
+      if (!row) return null;
+      Object.assign(row, fields, { status: "paid", paid_at: row.paid_at || paidAt });
+      write(rows);
+      return { ...row };
+    },
+    async mergeParams(ref, obj) {
+      write(read().map((r) => (r.ref === ref ? { ...r, params: { ...(r.params || {}), ...obj } } : r)));
+    },
+    async setDelivery(ref, platform, state) {
+      write(read().map((r) => (r.ref === ref
+        ? { ...r, params: { ...(r.params || {}), _delivery: { ...(r.params?._delivery || {}), [platform]: state } } } : r)));
+    },
+    async claimDelivery(ref, platform, leaseUntil, now) {
+      const rows = read();
+      const d = rows.find((r) => r.ref === ref)?.params?._delivery?.[platform];
+      if (!d || d.status !== "pending" || (d.lease_until || "") >= now) return false;
+      d.lease_until = leaseUntil;
+      write(rows);
+      return true;
     },
     async list() {
       return read().reverse();
@@ -261,16 +341,107 @@ function validBeamSignature(rawBody, signature) {
   return given.length === expected.length && crypto.timingSafeEqual(given, expected);
 }
 
+// A provider "paid" message only counts if it is for this exact order: same reference,
+// same amount in satang (the unit we sent Beam), THB.
+function matchesOrder(order, { amount, currency, referenceId }) {
+  const problems = [];
+  if (Number(amount) !== Number(order.amount)) problems.push(`amount ${amount} != ${order.amount}`);
+  if (currency !== "THB") problems.push(`currency ${currency}`);
+  if (referenceId !== undefined && referenceId !== order.ref) problems.push(`reference ${referenceId}`);
+  return problems;
+}
+
+// Mark an order paid once (idempotent), record the provider IDs, reload the saved record and
+// queue purchase delivery from it. Returns the saved order.
+async function confirmPaid(store, order, source, extra = {}, fields = {}) {
+  const prevBeam = order.params?._beam || {};
+  const updated = await store.markPaid(order.ref, fields, extra.paidAt || new Date().toISOString());
+  await store.mergeParams(order.ref, { _beam: { ...prevBeam, ...extra.beam, ...(updated ? { confirmed_by: source, confirmed_at: new Date().toISOString() } : {}) } });
+  const saved = await store.byRef(order.ref);
+  if (updated) {
+    console.log(`[beam] order ${order.ref} paid (${order.package}) via ${source}`);
+    await enqueuePurchaseDelivery(store, saved);
+  }
+  return saved;
+}
+
+// ---------------------------------------------------------------------------
+// Purchase delivery queue (server -> TikTok Events API). State lives on the order
+// (params._delivery.tiktok): pending -> sent (TikTok answered code 0) | failed (gave up) |
+// skipped (no token / consent denied) | cancelled (order no longer paid before sending).
+// Retries with backoff; a lease stops two instances sending the same order at once.
+// "sent" means TikTok accepted the request, not that the sale was attributed to an ad.
+// ---------------------------------------------------------------------------
+const DELIVERY_MAX_ATTEMPTS = 10;
+async function enqueuePurchaseDelivery(store, order) {
+  if (!order || order.status !== "paid" || !isProductionOrder(order)) return;
+  if (order.params?._delivery?.tiktok) return; // already queued or done
+  const now = new Date();
+  const state = !TIKTOK.token
+    ? { status: "skipped", reason: "TIKTOK_ACCESS_TOKEN not set" }
+    : order.params?._attr?.consent === "denied"
+      ? { status: "skipped", reason: "ad consent denied" }
+      : { status: "pending", event: "CompletePayment", event_id: order.ref, attempts: 0, queued_at: now.toISOString(),
+          // short delay so Beam's charge webhook (buyer's phone) can land first
+          next_at: new Date(now.getTime() + 15000).toISOString() };
+  await store.setDelivery(order.ref, "tiktok", state);
+  if (state.status === "pending") setTimeout(() => processDeliveries(store).catch((e) => console.warn("[delivery]", e.message)), 16000);
+}
+
+let deliveryRunning = false;
+async function processDeliveries(store) {
+  if (deliveryRunning) return;
+  deliveryRunning = true;
+  try {
+    const now = Date.now();
+    const due = (await store.list()).filter((r) => {
+      const d = r.params?._delivery?.tiktok;
+      return d && d.status === "pending" && Date.parse(d.next_at || 0) <= now;
+    });
+    for (const r of due) {
+      const nowIso = new Date().toISOString();
+      if (!(await store.claimDelivery(r.ref, "tiktok", new Date(Date.now() + 5 * 60000).toISOString(), nowIso))) continue;
+      const order = await store.byRef(r.ref); // reload the saved record before sending
+      const st = { ...order.params._delivery.tiktok, lease_until: null };
+      if (order.status !== "paid" || !isProductionOrder(order)) {
+        await store.setDelivery(order.ref, "tiktok", { ...st, status: "cancelled", reason: `order is ${order.status}` });
+        continue;
+      }
+      const result = await sendTikTokPurchase(order);
+      st.attempts = (st.attempts || 0) + 1;
+      st.last_attempt_at = new Date().toISOString();
+      if (result.ok) {
+        Object.assign(st, { status: "sent", ack: result.ack, sent_at: st.last_attempt_at, last_error: null });
+        console.log(`[tiktok] purchase ${order.ref} accepted${TIKTOK.testCode ? " (test events)" : ""}`);
+      } else {
+        st.last_error = result.error;
+        if (st.attempts >= DELIVERY_MAX_ATTEMPTS) st.status = "failed";
+        else st.next_at = new Date(Date.now() + Math.min(2 ** st.attempts * 60000, 6 * 3600000)).toISOString();
+        console.warn(`[tiktok] purchase ${order.ref} attempt ${st.attempts} failed: ${result.error}`);
+      }
+      await store.setDelivery(order.ref, "tiktok", st);
+    }
+  } finally {
+    deliveryRunning = false;
+  }
+}
+
 // Ask Beam for a pending order's link status (backup for missed webhooks).
 async function refreshFromBeam(store, order) {
   if (!BEAM.ready || order.status !== "pending" || !order.payment_link_id || String(order.beam_env).replace(/-test$/, "") !== BEAM.env) return;
   const link = await beamRequest("GET", `/api/v1/payment-links/${encodeURIComponent(order.payment_link_id)}`);
   const status = LINK_STATUS[link.status];
-  if (status && status !== order.status) {
-    const fields = { status, ...(status === "paid" && !order.paid_at ? { paid_at: new Date().toISOString() } : {}) };
-    await store.update(order.ref, fields);
-    Object.assign(order, fields);
-    if (status === "paid") reportPurchaseToTikTok(order);
+  if (!status || status === order.status) return;
+  if (status === "paid") {
+    const problems = matchesOrder(order, { amount: link.order?.netAmount, currency: link.order?.currency, referenceId: link.order?.referenceId });
+    if (problems.length) {
+      console.warn(`[beam] order ${order.ref}: paid link does not match the order (${problems.join(", ")}); not marked paid`);
+      return;
+    }
+    Object.assign(order, await confirmPaid(store, order, "beam_api_refresh", { beam: { paid_amount_satang: Number(link.order.netAmount) } }));
+  } else {
+    await store.update(order.ref, { status });
+    order.status = status;
   }
 }
 
@@ -278,6 +449,20 @@ async function refreshFromBeam(store, order) {
 // Helpers
 // ---------------------------------------------------------------------------
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+// Channel of an order = its last ad touch: click IDs first, then utm_source.
+function channelOf(r) {
+  const a = r.params?._attr || {};
+  const t = a.last || a.first || r;
+  if (t.gclid || t.gbraid || t.wbraid) return "google";
+  if (t.ttclid) return "tiktok";
+  if (t.ldtag_cl) return "line";
+  const src = String(t.utm_source || r.utm_source || "").toLowerCase();
+  return src || "direct/unknown";
+}
+// Beam's refund amount unit isn't documented; treat a value equal to the order in satang as satang.
+const refundAmountBaht = (r, f) => (Number(f.amount) === Number(r.amount) || Number(f.amount) > Number(r.amount) / 100 ? Number(f.amount) / 100 : Number(f.amount));
+const refundedBaht = (r) => (r.params?._refunds || []).reduce((s, f) => s + refundAmountBaht(r, f), 0);
 const clip = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
 const baht = (satang) => "฿" + (Number(satang || 0) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
 
@@ -316,7 +501,7 @@ const csvCell = (v) => {
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" }) : "";
 
-const STATUS_COLOR = { paid: "#1f7a3a", pending: "#9a6b00", expired: "#7a6f63", cancelled: "#7a6f63", refunded: "#7a6f63", error: "#c62a35" };
+const STATUS_COLOR = { partially_refunded: "#7a6f63", paid: "#1f7a3a", pending: "#9a6b00", expired: "#7a6f63", cancelled: "#7a6f63", refunded: "#7a6f63", error: "#c62a35" };
 
 // ---------------------------------------------------------------------------
 // App
@@ -340,50 +525,75 @@ async function main() {
       return res.status(400).send("Bad JSON");
     }
     const type = req.get("x-beam-event") || "";
+    const phoneOf = (c, fallback) => {
+      const p = c?.primaryPhone; // Thai numbers arrive as 0XXXXXXXXX: keep that local format
+      return p?.number ? (p.number.startsWith("0") ? p.number : `${p.countryCode || ""}${p.number}`) : fallback || null;
+    };
     try {
       if (type === "payment_link.paid" && event.paymentLinkId) {
+        // The authoritative "paid": amount (satang), currency and reference must match the order.
         const order = await store.byLink(event.paymentLinkId);
-        if (order && order.status !== "paid") {
-          await store.update(order.ref, { status: "paid", paid_at: new Date().toISOString() });
-          console.log(`[beam] order ${order.ref} paid (${order.package})`);
-          reportPurchaseToTikTok(order);
+        if (!order) console.warn(`[beam] payment_link.paid for unknown link ${event.paymentLinkId}`);
+        else if (order.status === "paid") console.log(`[beam] duplicate payment_link.paid for ${order.ref} ignored`);
+        else {
+          const problems = matchesOrder(order, { amount: event.order?.netAmount, currency: event.order?.currency, referenceId: event.order?.referenceId });
+          if (problems.length) {
+            console.warn(`[beam] payment_link.paid for ${order.ref} does not match the order (${problems.join(", ")}); not marked paid`);
+            await store.mergeParams(order.ref, { _beam: { ...(order.params?._beam || {}), mismatch: problems.join(", "), mismatch_at: new Date().toISOString() } });
+          } else {
+            await confirmPaid(store, order, "payment_link.paid", { beam: { paid_amount_satang: Number(event.order.netAmount), payment_link_id: event.paymentLinkId } });
+          }
         }
       } else if (type === "charge.succeeded" && event.source !== "PAYMENT_LINK") {
         // Store-link payment: no order ref, so match the newest unpaid store-link order
         // with the same email and amount from the last 3 days. Unmatched ones are logged.
+        // (Store-link orders are counted in reports but never sent to ad platforms.)
         const email = String(event.customer?.email || "").trim().toLowerCase();
         const order = (await store.list()).find(
           (r) => r.beam_env === "store_link" && r.status === "pending" && email && r.email === email &&
             Number(r.amount) === Number(event.amount) && Date.now() - new Date(r.created_at) < 3 * 864e5
         );
         if (order) {
-          const p = event.customer?.primaryPhone;
-          await store.update(order.ref, {
-            status: "paid",
-            paid_at: event.transactionTime || new Date().toISOString(),
-            phone: p?.number ? (p.number.startsWith("0") ? p.number : `${p.countryCode || ""}${p.number}`) : order.phone || null,
-            payment_method: event.paymentMethod?.paymentMethodType || null,
-          });
+          await confirmPaid(store, order, "charge.succeeded (store link)", { paidAt: event.transactionTime, beam: { charge_id: event.chargeId } },
+            { phone: phoneOf(event.customer, order.phone), payment_method: event.paymentMethod?.paymentMethodType || null });
           console.log(`[beam] store-link order ${order.ref} matched to charge ${event.chargeId}`);
         } else {
           console.log(`[beam] store-link charge ${event.chargeId} (${event.amount}) not matched to an order`);
         }
       } else if (type === "charge.succeeded" && event.source === "PAYMENT_LINK" && event.sourceId) {
-        // Carries the buyer's phone and payment method; also marks paid if it arrives first.
+        // Carries the buyer's phone, payment method and charge ID. It also confirms payment,
+        // but only when its amount matches the order exactly; otherwise payment_link.paid does.
         const order = await store.byLink(event.sourceId);
         if (order) {
-          const p = event.customer?.primaryPhone;
           const fields = {
-            // Thai numbers arrive as 0XXXXXXXXX: keep that familiar local format.
-            phone: p?.number ? (p.number.startsWith("0") ? p.number : `${p.countryCode || ""}${p.number}`) : order.phone || null,
+            phone: phoneOf(event.customer, order.phone),
             payment_method: event.paymentMethod?.paymentMethodType || order.payment_method || null,
           };
-          if (order.status !== "paid") Object.assign(fields, { status: "paid", paid_at: event.transactionTime || new Date().toISOString() });
           await store.update(order.ref, fields);
-          reportPurchaseToTikTok(order, fields.phone); // same event_id as above: TikTok keeps one
+          const beam = { ...(order.params?._beam || {}), charge_id: event.chargeId || null };
+          if (order.status !== "paid" && event.status === "SUCCEEDED" &&
+              !matchesOrder(order, { amount: event.amount, currency: event.currency, referenceId: event.referenceId || undefined }).length) {
+            await confirmPaid(store, { ...order, params: { ...order.params, _beam: beam } }, "charge.succeeded", { paidAt: event.transactionTime, beam });
+          } else {
+            await store.mergeParams(order.ref, { _beam: beam });
+          }
+        }
+      } else if (type === "refund.succeeded" && /^5W-[0-9A-F]{10}$/.test(String(event.referenceId || ""))) {
+        // Refunds are recorded on the order and shown in reports. Purchase events already sent
+        // to ad platforms are not reversed from here.
+        const order = await store.byRef(event.referenceId);
+        if (order) {
+          const refunds = (order.params?._refunds || []).filter((r) => r.refund_id !== event.refundId);
+          refunds.push({ refund_id: event.refundId, charge_id: event.chargeId, amount: event.amount, currency: event.currency, at: event.transactionTime || new Date().toISOString() });
+          await store.mergeParams(order.ref, { _refunds: refunds });
+          // Beam's refund amount unit isn't documented: a full refund matches the order in satang or baht.
+          const full = refunds.some((r) => Number(r.amount) === Number(order.amount) || Number(r.amount) * 100 === Number(order.amount));
+          await store.update(order.ref, { status: full ? "refunded" : "partially_refunded" });
+          console.log(`[beam] order ${order.ref} ${full ? "refunded" : "partially refunded"} (${event.refundId})`);
         }
       }
       res.status(200).send("ok");
+      processDeliveries(store).catch((e) => console.warn("[delivery]", e.message)); // retries due now
     } catch (err) {
       console.error(`[beam] webhook ${type} failed:`, err.message);
       res.status(500).send("error"); // Beam retries
@@ -401,13 +611,21 @@ async function main() {
     if (!name || !EMAIL_RE.test(email) || !pkg) return res.status(400).json({ message: "Invalid name, email or package" });
 
     const params = {};
-    for (const [k, v] of Object.entries(req.body?.params || {}).slice(0, 30)) params[clip(k, 50)] = clip(v, 300);
+    for (const [k, v] of Object.entries(req.body?.params || {}).slice(0, 30)) {
+      const key = clip(k, 50);
+      if (key && !key.startsWith("_")) params[key] = clip(v, 300); // "_" keys are reserved for our own data
+    }
+    const first = cleanTouch(req.body?.attribution?.first), last = cleanTouch(req.body?.attribution?.last);
+    const consent = ["granted", "denied"].includes(req.body?.attribution?.consent) ? req.body.attribution.consent : "not_collected";
     const isTest = Boolean(TEST_CODE) && BEAM.ready && params.test === TEST_CODE;
     delete params.test; // never store the code
     const ref = "5W-" + crypto.randomBytes(5).toString("hex").toUpperCase();
     const amount = isTest ? TEST_AMOUNT : pkg.amount;
     const order = { ref, name, email, package: pkgKey, amount, beam_env: BEAM.env + (isTest ? "-test" : ""), params, referrer: clip(req.body?.referrer, 500) };
-    for (const f of AD_FIELDS) order[f] = params[f] || null;
+    // Columns = last ad touch (from the saved visit, or the current URL); first touch kept in params._attr.
+    const touch = last || first || cleanTouch(params) || {};
+    for (const f of AD_FIELDS) order[f] = touch[f] || null;
+    params._attr = { policy: "columns=last_touch", first, last, consent };
 
     if (!BEAM.ready) {
       // No API keys: save the buyer, then send them to the tier's reusable Beam link.
@@ -480,7 +698,7 @@ async function main() {
         await refreshFromBeam(store, order).catch((e) => console.warn("[status] refresh", ref, e.message));
       }
       // value is in baht (amounts are stored in satang).
-      res.json({ order: order.ref, status: order.status, package: order.package, value: Number(order.amount) / 100, currency: order.currency || "THB", test: isTestOrder(order) });
+      res.json({ order: order.ref, status: order.status, package: order.package, value: Number(order.amount) / 100, currency: order.currency || "THB", test: !isProductionOrder(order) });
     } catch (err) {
       console.error("[status]", ref, err.message);
       res.status(500).json({ message: "error" });
@@ -493,8 +711,8 @@ async function main() {
     const recentPending = rows.filter((r) => r.status === "pending" && Date.now() - new Date(r.created_at) < 3 * 864e5).slice(0, 25);
     for (const r of recentPending) await refreshFromBeam(store, r).catch((e) => console.warn("[admin] refresh", r.ref, e.message));
 
-    const paid = rows.filter((r) => r.status === "paid" && !isTestOrder(r));
-    const testCount = rows.filter(isTestOrder).length;
+    const paid = rows.filter((r) => r.status === "paid" && isRealOrder(r));
+    const testCount = rows.filter((r) => !isRealOrder(r)).length;
     const byPackage = {};
     for (const r of paid) {
       const k = PACKAGES[r.package]?.label || r.package;
@@ -518,19 +736,35 @@ background:#c62a35;color:#fff;border-radius:8px;text-decoration:none}.wrap{overf
 <h1>Orders: ${paid.length} paid · ${esc(baht(revenue))}</h1>
 <div class="muted"><span class="mode">${esc(mode)}</span> · storage: ${store.kind}</div>
 <div class="muted">Paid by package: ${Object.entries(byPackage).map(([k, v]) => `${esc(k)} ${v.n} (${esc(baht(v.sum))})`).join(" · ") || "none yet"}</div>
-${testCount ? `<div class="muted">Test orders (฿20, not counted above): ${testCount}</div>` : ""}
-<div class="muted">Not marked paid: ${rows.filter((r) => r.status !== "paid" && !isTestOrder(r)).length}${BEAM.ready ? " (pending, expired, cancelled or failed)" : " (sent to Beam; with store links, check Beam Lighthouse for who actually paid)"}</div>
+${testCount ? `<div class="muted">Test / playground orders (not counted above): ${testCount}</div>` : ""}
+<div class="muted"><a href="/admin/report">Daily report (read-only)</a></div>
+<div class="muted">Not marked paid: ${rows.filter((r) => r.status !== "paid" && isRealOrder(r)).length}${BEAM.ready ? " (pending, expired, cancelled or failed)" : " (sent to Beam; with store links, check Beam Lighthouse for who actually paid)"}</div>
 <a class="btn" href="/admin/orders.csv">Download CSV</a>
 <div class="wrap"><table><thead><tr><th>Created (Bangkok)</th><th>Status</th><th>Order</th><th>Name</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Paid (Bangkok)</th><th>Method</th><th>utm_source</th><th>utm_campaign</th></tr></thead><tbody>
-${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${STATUS_COLOR[r.status] || "#1f1a14"};font-weight:600">${esc(r.status)}${isTestOrder(r) ? ' <span style="background:#1f1a14;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px">TEST</span>' : ""}</td><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(PACKAGES[r.package]?.label || r.package)}</td><td>${esc(baht(r.amount))}</td><td>${esc(fmtDate(r.paid_at))}</td><td>${esc(r.payment_method)}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td></tr>`).join("\n")}
+${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${STATUS_COLOR[r.status] || "#1f1a14"};font-weight:600">${esc(r.status)}${!isRealOrder(r) ? ' <span style="background:#1f1a14;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px">TEST</span>' : ""}</td><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(PACKAGES[r.package]?.label || r.package)}</td><td>${esc(baht(r.amount))}</td><td>${esc(fmtDate(r.paid_at))}</td><td>${esc(r.payment_method)}</td><td>${esc(r.utm_source)}</td><td>${esc(r.utm_campaign)}</td></tr>`).join("\n")}
 </tbody></table></div></body></html>`);
   });
 
   app.get("/admin/orders.csv", checkAdmin, async (_req, res) => {
     const rows = await store.list();
-    const cols = ["created_at", "status", "ref", "name", "email", "phone", "package", "amount_thb", "paid_at", "payment_method", "beam_env", "payment_link_id", ...AD_FIELDS, "referrer"];
-    const value = (r, c) =>
-      c === "amount_thb" ? Number(r.amount) / 100 : c === "created_at" || c === "paid_at" ? (r[c] ? new Date(r[c]).toISOString() : "") : r[c];
+    const cols = ["created_at", "status", "ref", "name", "email", "phone", "package", "amount_thb", "paid_at", "payment_method", "beam_env", "payment_link_id",
+      ...AD_FIELDS, "channel", ...ATTR_KEYS.map((k) => "first_" + k), "first_touch_at", ...ATTR_KEYS.map((k) => "last_" + k), "last_touch_at",
+      "consent", "beam_charge_id", "refunded_thb", "tiktok_server_delivery", "referrer"];
+    const value = (r, c) => {
+      const a = r.params?._attr || {};
+      if (c === "amount_thb") return Number(r.amount) / 100;
+      if (c === "created_at" || c === "paid_at") return r[c] ? new Date(r[c]).toISOString() : "";
+      if (c === "channel") return channelOf(r);
+      if (c.startsWith("first_") || c.startsWith("last_")) {
+        const [which, ...rest] = c.split("_"); const k = rest.join("_");
+        return k === "touch_at" ? a[which]?.ts || "" : a[which]?.[k] || "";
+      }
+      if (c === "consent") return a.consent || "";
+      if (c === "beam_charge_id") return r.params?._beam?.charge_id || "";
+      if (c === "refunded_thb") return refundedBaht(r) || "";
+      if (c === "tiktok_server_delivery") return r.params?._delivery?.tiktok?.status || "";
+      return r[c];
+    };
     const lines = [cols.join(","), ...rows.map((r) => cols.map((c) => csvCell(value(r, c))).join(","))];
     res.set({
       "Content-Type": "text/csv; charset=utf-8",
@@ -538,6 +772,54 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
       "Cache-Control": "no-store",
     });
     res.send("﻿" + lines.join("\r\n")); // BOM so Excel shows Thai names correctly
+  });
+
+  // Daily value-for-money report. Read-only: it never asks Beam for updates and never sends
+  // events (unlike /admin, which refreshes pending orders). Counts unique real-money orders
+  // by Bangkok day and channel (last ad touch). Ad spend and each platform's own attributed
+  // purchases come from the ad platforms, not from here; don't add those to these counts.
+  app.get(["/admin/report", "/admin/report.csv"], checkAdmin, async (req, res) => {
+    const rows = (await store.list()).filter(isRealOrder);
+    const day = (d) => new Date(new Date(d).getTime() + 7 * 3600000).toISOString().slice(0, 10);
+    const buckets = new Map();
+    const get = (d, ch) => {
+      const k = d + "|" + ch;
+      if (!buckets.has(k)) buckets.set(k, { date: d, channel: ch, paid_orders: 0, revenue_thb: 0, refunds: 0, refunded_thb: 0, with_click_id: 0, with_any_source: 0 });
+      return buckets.get(k);
+    };
+    for (const r of rows) {
+      const ch = channelOf(r);
+      if (["paid", "refunded", "partially_refunded"].includes(r.status) && r.paid_at) {
+        const b = get(day(r.paid_at), ch);
+        b.paid_orders += 1;
+        b.revenue_thb += Number(r.amount) / 100;
+        const a = r.params?._attr || {};
+        const t = { ...(a.first || {}), ...(a.last || {}), ...r };
+        if (t.gclid || t.gbraid || t.wbraid || t.ttclid || t.ldtag_cl) b.with_click_id += 1;
+        if (ch !== "direct/unknown") b.with_any_source += 1;
+      }
+      for (const f of r.params?._refunds || []) {
+        const b = get(day(f.at), ch);
+        b.refunds += 1;
+        b.refunded_thb += refundAmountBaht(r, f);
+      }
+    }
+    const out = [...buckets.values()].sort((x, y) => (x.date + x.channel).localeCompare(y.date + y.channel));
+    const cols = ["date", "channel", "paid_orders", "revenue_thb", "refunds", "refunded_thb", "with_any_source", "with_click_id", "spend_thb"];
+    res.set("Cache-Control", "no-store");
+    if (req.path.endsWith(".csv")) {
+      res.set({ "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="yaru-daily-report-${new Date().toISOString().slice(0, 10)}.csv"` });
+      return res.send("\ufeff" + [cols.join(","), ...out.map((b) => cols.map((c) => csvCell(c === "spend_thb" ? "" : b[c])).join(","))].join("\r\n"));
+    }
+    res.send(`<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Daily report</title><style>body{font-family:system-ui,sans-serif;margin:24px;color:#1f1a14;background:#f7f3ee}table{border-collapse:collapse;background:#fff;margin-top:12px}
+th,td{padding:6px 10px;border-bottom:1px solid #e6dfd6;text-align:left;font-size:14px}th{background:#c62a35;color:#fff}.muted{color:#7a6f63}</style></head><body>
+<h1>Daily report (read-only)</h1><p class="muted">Unique real-money orders by Bangkok day (paid date) and channel (last ad touch). Test, playground and failed orders are excluded.
+Spend is not known to the website: fill it in from each ad platform. Platform-attributed purchases (TikTok/Google/LINE dashboards) are separate numbers; don't add them to these.</p>
+<p><a href="/admin/report.csv">Download CSV</a></p>
+<table><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>
+${out.map((b) => `<tr>${cols.map((c) => `<td>${esc(c === "spend_thb" ? "" : b[c])}</td>`).join("")}</tr>`).join("\n") || '<tr><td colspan="9">No paid orders yet</td></tr>'}
+</tbody></table></body></html>`);
   });
 
   app.get("/healthz", (_req, res) =>
@@ -564,6 +846,10 @@ ${rows.map((r) => `<tr><td>${esc(fmtDate(r.created_at))}</td><td style="color:${
   }));
   // Single-page app: unknown paths get the landing page.
   app.get("*", (_req, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
+
+  // Purchase delivery queue: on start (catches up after a restart) and every minute.
+  processDeliveries(store).catch((e) => console.warn("[delivery]", e.message));
+  setInterval(() => processDeliveries(store).catch((e) => console.warn("[delivery]", e.message)), 60000);
 
   app.listen(PORT, "0.0.0.0", () =>
     console.log(`[5wan] listening on :${PORT} (storage: ${store.kind}, beam: ${BEAM.ready ? BEAM.env : "not configured"})`)
